@@ -17,6 +17,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+}, {
+  versionKey: false, // убрал создание поля ключа версии записи
 });
 
 module.exports = mongoose.model('user', userSchema);

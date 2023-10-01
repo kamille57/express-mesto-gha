@@ -1,38 +1,36 @@
 /* eslint-disable no-console */
 const express = require('express');
-const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
 const { PORT = 3000 } = process.env;
-
 const app = express();
-mongoose.connect('mongodb://localhost:27017/mynewdb', {
-  useNewUrlParser: true,
-  useCreateIndex: true,
-  useUnifiedTopology: true,
-  useFindAndModify: false,
-});
 
-// Мидлвэр для временного решения авторизации
-app.use((req, res, next) => {
-  req.user = {
-    _id: '5d8b8592978f8bd833ca8133', // Вставьте сюда _id созданного в предыдущем пункте пользователя
-  };
-  next();
+mongoose.connect('mongodb://localhost:27017/mestodb', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 });
 
 app.use(express.json());
-app.use(bodyParser.json());
-// Роуты для пользователей
-const userRouter = require('./routes/users');
+app.use('/users', require('./routes/users'));
 
-app.use('/users', userRouter);
+app.use((req, res, next) => {
+  req.user = {
+    _id: '6519dcc4bc240f1a286369a5', // вставьте сюда _id созданного в предыдущем пункте пользователя
+  };
 
-// Роуты для карточек
-const cardRouter = require('./routes/cards');
+  next();
+});
 
-app.use('/cards', cardRouter);
+app.use((req, res, next) => {
+  req.user = {
+    _id: '6519dcc4bc240f1a286369a5', // вставьте сюда _id созданного в предыдущем пункте пользователя
+  };
+
+  next();
+});
 
 app.listen(PORT, () => {
-  console.log(`Server started on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
+
+module.exports = app;
