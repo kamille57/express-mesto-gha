@@ -1,17 +1,18 @@
-/* eslint-disable no-console */
-const express = require('express');
+const router = require('express').Router();
 
-const router = express.Router();
+const {
+  getCards,
+  createCard,
+  deleteCard,
+} = require('../controllers/cards');
 
-// GET /cards — возвращает все карточки
-router.get('/', (req, res) => {
-  res.send('Get all cards');
-});
+// GET /cards - returns all cards
+router.get('/cards', getCards);
 
-// POST /cards — создаёт карточку
-router.post('/', (req, res) => {
-  console.log(req.user._id); // _id станет доступен
-  res.send('Create card');
-});
+// POST /cards - creates a card
+router.post('/cards', createCard);
+
+// DELETE /cards/:cardId - deletes a card by its identifier
+router.delete('/cards/:cardId', deleteCard);
 
 module.exports = router;
