@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 /* eslint-disable consistent-return */
+const mongoose = require('mongoose');
 const Card = require('../models/card');
 
 // Get all cards
@@ -40,6 +41,12 @@ module.exports.deleteCard = (req, res) => {
 // Add like
 module.exports.likeCard = (req, res) => {
   const { cardId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(cardId)) {
+    // проверяем, что id карточки является корректным ObjectId
+    return res.status(400).send({ message: 'Некорректный ID карточки' });
+  }
+
   Card.findByIdAndUpdate(
     cardId,
     { $addToSet: { likes: req.user._id } }, // add _id to array
@@ -57,7 +64,15 @@ module.exports.likeCard = (req, res) => {
 // Remove like
 module.exports.deleteLike = (req, res) => {
   const { cardId } = req.params;
-  Card.findByIdAndUpdate(cardId, { $pull: { likes: req.user._id } }, { new: true })
+
+  if (!mongoose.Types.ObjectId.isValid(cardId)) {
+    // проверяем, что id карточки является корректным ObjectId
+    return res.status(400).send({ message: 'Некорректный ID карточки' });
+  }
+
+  Card.findByIdAndUpdate(cardId,
+    { $pull: { likes: req.user._id } },
+    { new: true })
     .then((card) => {
       if (!card) {
         return res.status(404).send({ message: 'Карточка не найдена' });

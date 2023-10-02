@@ -1,4 +1,5 @@
 /* eslint-disable consistent-return */
+const mongoose = require('mongoose');
 const User = require('../models/user');
 
 // Получить всех пользователей
@@ -11,6 +12,10 @@ module.exports.getUsers = (req, res) => {
 // Получить пользователя по _id
 module.exports.getUser = (req, res) => {
   const userId = req.user._id;
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).send({ message: 'Некорректный id пользователя' });
+  }
+
   User.findById(userId)
     .then((user) => {
       if (!user) {
