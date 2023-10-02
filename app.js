@@ -26,6 +26,11 @@ app.use((req, res, next) => {
 app.use(usersRouter);
 app.use(cardsRouter);
 
+// Обработчик для несуществующих маршрутов
+app.use((req, res) => {
+  res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
