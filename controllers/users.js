@@ -11,7 +11,8 @@ module.exports.getUsers = (req, res) => {
 
 // Получить пользователя по _id
 module.exports.getUser = (req, res) => {
-  const userId = req.user._id;
+  const { userId } = req.params;
+
   if (!mongoose.Types.ObjectId.isValid(userId)) {
     return res.status(400).send({ message: 'Некорректный id пользователя' });
   }
@@ -21,11 +22,7 @@ module.exports.getUser = (req, res) => {
       if (!user) {
         return res.status(404).send({ message: 'Пользователь не найден' });
       }
-      res.send({
-        name: user.name,
-        about: user.about,
-        avatar: user.avatar,
-      });
+      res.send({ data: user });
     })
     .catch((err) => res.status(500).send({ message: err.message }));
 };
