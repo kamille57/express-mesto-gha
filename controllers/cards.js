@@ -6,7 +6,7 @@ const Card = require('../models/card');
 // Get all cards
 module.exports.getCards = (req, res) => {
   Card.find()
-    .then((cards) => res.status(200).send({ data: cards }))
+    .then((cards) => res.status(201).send({ data: cards }))
     .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
 };
 
@@ -35,10 +35,9 @@ module.exports.deleteCard = (req, res) => {
   Card.findByIdAndRemove(cardId)
     .then((card) => {
       if (!card) {
-        res.status(404).send({ message: 'Card not found' });
-      } else {
-        res.send({ message: 'Success' });
+        return res.status(404).send({ message: 'Card not found' });
       }
+      res.status(201).send({ data: card });
     })
     .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
 };
@@ -60,7 +59,7 @@ module.exports.likeCard = (req, res) => {
       if (!card) {
         return res.status(404).send({ message: 'Card not found' });
       }
-      res.send({ message: 'Success' });
+      res.status(201).send({ data: card });
     })
     .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
 };
@@ -82,7 +81,7 @@ module.exports.deleteLike = (req, res) => {
       if (!card) {
         return res.status(404).send({ message: 'Card not found' });
       }
-      res.send({ message: 'Success' });
+      res.status(201).send({ data: card });
     })
     .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
 };

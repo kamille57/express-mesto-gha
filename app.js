@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 const express = require('express');
 const mongoose = require('mongoose');
+const helmet = require('helmet'); // добавляем библиотеку helmet
 
 const { PORT = 3000 } = process.env;
 const app = express();
@@ -11,6 +12,7 @@ mongoose.connect('mongodb://localhost:27017/mynewdb', {
 });
 
 app.use(express.json());
+app.use(helmet()); // включаем middleware helmet
 
 const usersRouter = require('./routes/users');
 const cardsRouter = require('./routes/cards');
