@@ -49,7 +49,11 @@ module.exports.updateProfile = (req, res) => {
     return res.status(400).send({ message: 'Name and about are required' });
   }
 
-  User.findByIdAndUpdate(userId, { name, about }, { new: true, runValidators: true })
+  User.findByIdAndUpdate(
+    userId,
+    { name, about },
+    { new: true, runValidators: true },
+  )
     .then((user) => {
       if (!user) {
         return res.status(404).send({ message: 'Пользователь не найден' });
@@ -68,7 +72,11 @@ module.exports.updateAvatar = (req, res) => {
     return res.status(400).send({ message: 'Avatar is required' });
   }
 
-  User.findByIdAndUpdate(userId, { avatar }, { new: true, runValidators: true })
+  User.findByIdAndUpdate(
+    userId,
+    { avatar },
+    { new: true, runValidators: true },
+  )
     .then((user) => {
       if (!user) {
         return res.status(404).send({ message: 'Пользователь не найден' });
