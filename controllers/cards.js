@@ -7,12 +7,12 @@ const Card = require('../models/card');
 module.exports.getCards = (req, res) => {
   Card.find()
     .then((cards) => res.status(201).send({ data: cards }))
-    .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
+    .catch((err) => res.status(400).send({ message: 'Internal Server Error', error: err }));
 };
 
 // Create a new card
 module.exports.createCard = (req, res) => {
-  console.log(req.user._id); // _id will be accessible
+  console.log(req.user._id); // _id будет доступен
   const { name, link } = req.body;
 
   if (!name || !link) {
@@ -20,8 +20,8 @@ module.exports.createCard = (req, res) => {
   }
 
   Card.create({ name, link, owner: req.user._id })
-    .then((card) => res.status(201).send({ data: card }))
-    .catch((err) => res.status(500).send({ message: 'Server error occurred', error: err }));
+    .then((cards) => res.status(201).send({ data: cards }))
+    .catch(() => res.status(400).send({ message: 'Некорректные данные для создания карточки' }));
 };
 
 // Delete card
@@ -29,7 +29,7 @@ module.exports.deleteCard = (req, res) => {
   const { cardId } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(cardId)) {
-    return res.status(400).send({ message: 'Invalid card ID' });
+    return res.status(500).send({ message: 'Invalid card ID' });
   }
 
   Card.findByIdAndRemove(cardId)
@@ -39,7 +39,7 @@ module.exports.deleteCard = (req, res) => {
       }
       res.status(201).send({ data: card });
     })
-    .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
+    .catch((err) => res.status(400).send({ message: 'Internal Server Error', error: err }));
 };
 
 // Add like
@@ -47,7 +47,7 @@ module.exports.likeCard = (req, res) => {
   const { cardId } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(cardId)) {
-    return res.status(400).send({ message: 'Invalid card ID' });
+    return res.status(500).send({ message: 'Invalid card ID' });
   }
 
   Card.findByIdAndUpdate(
@@ -61,7 +61,7 @@ module.exports.likeCard = (req, res) => {
       }
       res.status(201).send({ data: card });
     })
-    .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
+    .catch((err) => res.status(400).send({ message: 'Internal Server Error', error: err }));
 };
 
 // Remove like
@@ -69,7 +69,7 @@ module.exports.deleteLike = (req, res) => {
   const { cardId } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(cardId)) {
-    return res.status(400).send({ message: 'Invalid card ID' });
+    return res.status(500).send({ message: 'Invalid card ID' });
   }
 
   Card.findByIdAndUpdate(
@@ -83,5 +83,5 @@ module.exports.deleteLike = (req, res) => {
       }
       res.status(201).send({ data: card });
     })
-    .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
+    .catch((err) => res.status(400).send({ message: 'Internal Server Error', error: err }));
 };
