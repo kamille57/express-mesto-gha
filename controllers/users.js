@@ -39,11 +39,14 @@ module.exports.createUser = (req, res) => {
     .catch((err) => res.status(400).send({ message: err.message }));
 };
 
-// Обновить профиль пользователя
+// Обновить профиль
 module.exports.updateProfile = (req, res) => {
+  const userId = req.user._id;
   const { name, about } = req.body;
 
-  const userId = req.user._id;
+  if (!name || !about) {
+    return res.status(400).send({ message: 'Name and about are required' });
+  }
 
   User.findByIdAndUpdate(userId, { name, about }, { new: true, runValidators: true })
     .then((user) => {
@@ -52,18 +55,18 @@ module.exports.updateProfile = (req, res) => {
       }
       res.send({ data: user });
     })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные' });
-      }
-      res.status(500).send({ message: err.message });
-    });
+    .catch((err) => res.status(500).send({ message: err.message }));
 };
 
-// Обновить аватар пользователя
+// Обновить аватар
 module.exports.updateAvatar = (req, res) => {
-  const { avatar } = req.body;
   const userId = req.user._id;
+  const { avatar } = req.body;
+
+  if (!avatar) {
+    return res.status(400).send({ message: 'Avatar is required' });
+  }
+
   User.findByIdAndUpdate(userId, { avatar }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
@@ -71,10 +74,5 @@ module.exports.updateAvatar = (req, res) => {
       }
       res.send({ data: user });
     })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: 'Переданы некорректные данные' });
-      }
-      res.status(500).send({ message: err.message });
-    });
+    .catch((err) => res.status(500).send({ message: err.message }));
 };
