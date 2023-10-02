@@ -4,15 +4,23 @@ const {
   getCards,
   createCard,
   deleteCard,
+  likeCard,
+  deleteLike,
 } = require('../controllers/cards');
 
-// GET /cards - returns all cards
+// GET /cards - возвращает все карточки
 router.get('/cards', getCards);
 
-// POST /cards - creates a card
+// POST /cards - создание
 router.post('/cards', createCard);
 
-// DELETE /cards/:cardId - deletes a card by its identifier
+// DELETE /cards/:cardId - удалить карточку
 router.delete('/cards/:cardId', deleteCard);
+
+// PUT /cards/:cardId/likes — поставить лайк карточке
+router.put('/cards/:cardId/likes', likeCard);
+
+// DELETE /cards/:cardId/likes — убрать лайк с карточки
+router.delete('/cards/:cardId/likes', deleteLike);
 
 module.exports = router;

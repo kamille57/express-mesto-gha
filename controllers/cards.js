@@ -23,16 +23,46 @@ module.exports.createCard = (req, res) => {
     .catch(() => res.status(400).send({ message: 'Invalid data for card creation' }));
 };
 
-// Delete a card by id
+// удаление карточки
 module.exports.deleteCard = (req, res) => {
   const { cardId } = req.params;
-
   Card.findByIdAndRemove(cardId)
-    .then((result) => {
-      if (!result) {
-        return res.status(404).send({ message: 'Card not found' });
+    .then((card) => {
+      if (!card) {
+        res.status(404).send({ message: 'Карточка не найдена' });
+      } else {
+        res.send({ message: 'Успешный успех' });
       }
-      res.send({ message: 'Card deleted successfully' });
     })
-    .catch(() => res.status(500).send({ message: 'Internal Server Error' }));
+    .catch(() => res.status(500).send({ message: 'Внутренняя ошибка сервера' }));
+};
+
+// Add like
+module.exports.likeCard = (req, res) => {
+  const { cardId } = req.params;
+  Card.findByIdAndUpdate(
+    cardId,
+    { $addToSet: { likes: req.user._id } }, // add _id to array
+    { new: true },
+  )
+    .then((card) => {
+      if (!card) {
+        return res.status(404).send({ message: 'Карточка не найдена' });
+      }
+      res.send({ message: 'Успешный успех' });
+    })
+    .catch(() => res.status(500).send({ message: 'Внутренняя ошибка сервера' }));
+};
+
+// Remove like
+module.exports.deleteLike = (req, res) => {
+  const { cardId } = req.params;
+  Card.findByIdAndUpdate(cardId, { $pull: { likes: req.user._id } }, { new: true })
+    .then((card) => {
+      if (!card) {
+        return res.status(404).send({ message: 'Карточка не найдена' });
+      }
+      res.send({ message: 'Успешный успех' });
+    })
+    .catch(() => res.status(500).send({ message: 'Внутренняя ошибка сервера' }));
 };

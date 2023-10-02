@@ -28,7 +28,7 @@ const cardSchema = new mongoose.Schema({
     default: Date.now,
   },
 }, {
-  versionKey: false, // убрал создание поля ключа версии записи
+  versionKey: false, // убрали создание поля ключа версии записи
 });
 
 module.exports = mongoose.model('card', cardSchema);
