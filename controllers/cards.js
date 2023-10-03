@@ -21,7 +21,7 @@ module.exports.createCard = (req, res) => {
 
   Card.create({ name, link, owner: req.user._id })
     .then((cards) => res.status(201).send({ data: cards }))
-    .catch(() => res.status(400).send({ message: 'Некорректные данные для создания карточки' }));
+    .catch(() => res.status(500).send({ message: 'Некорректные данные для создания карточки' }));
 };
 
 // Delete card

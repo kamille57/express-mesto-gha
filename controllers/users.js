@@ -5,7 +5,7 @@ const User = require('../models/user');
 // Получить всех пользователей
 module.exports.getUsers = (req, res) => {
   User.find()
-    .then((users) => res.send({ data: users }))
+    .then((users) => res.status(200).send({ data: users }))
     .catch((err) => res.status(500).send({ message: err.message }));
 };
 
@@ -22,7 +22,7 @@ module.exports.getUser = (req, res) => {
       if (!user) {
         return res.status(404).send({ message: 'Пользователь не найден' });
       }
-      res.send({ data: user });
+      res.status(200).send({ data: user });
     })
     .catch((err) => res.status(500).send({ message: err.message }));
 };
@@ -37,7 +37,12 @@ module.exports.createUser = (req, res) => {
 
   User.create({ name, about, avatar })
     .then((user) => res.status(201).send({ data: user }))
-    .catch((err) => res.status(400).send({ message: err.message }));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return res.status(400).send({ message: err.message });
+      }
+      return res.status(500).send({ message: 'Server error occurred', error: err });
+    });
 };
 
 // Обновить профиль
@@ -58,9 +63,14 @@ module.exports.updateProfile = (req, res) => {
       if (!user) {
         return res.status(404).send({ message: 'Пользователь не найден' });
       }
-      res.send({ data: user });
+      res.status(200).send({ data: user });
     })
-    .catch((err) => res.status(500).send({ message: err.message }));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return res.status(400).send({ message: err.message });
+      }
+      return res.status(500).send({ message: 'Server error occurred', error: err });
+    });
 };
 
 // Обновить аватар
@@ -79,9 +89,14 @@ module.exports.updateAvatar = (req, res) => {
   )
     .then((user) => {
       if (!user) {
-        return res.status(404).send({ message: 'Пользователь не найден' });
+        return res.status(404).send({ message: 'User not found' });
       }
-      res.send({ data: user });
+      res.status(200).send({ data: user });
     })
-    .catch((err) => res.status(500).send({ message: err.message }));
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return res.status(400).send({ message: err.message });
+      }
+      return res.status(500).send({ message: 'Server error occurred', error: err });
+    });
 };
