@@ -1,5 +1,6 @@
 /* eslint-disable consistent-return */
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 const User = require('../models/user');
 
 // Получить всех пользователей
@@ -29,13 +30,19 @@ module.exports.getUser = (req, res) => {
 
 // Создать нового пользователя
 module.exports.createUser = (req, res) => {
-  const { name, about, avatar } = req.body;
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
 
-  if (!name || !about || !avatar) {
-    return res.status(400).send({ message: 'Name, about, and avatar are required' });
+  const hashedPassword = bcrypt.hashSync(password, 10); // хеширование пароля
+
+  if (!email || !password) {
+    return res.status(400).send({ message: 'Email and password are required' });
   }
 
-  User.create({ name, about, avatar })
+  User.create({
+    name, about, avatar, email, password: hashedPassword,
+  })
     .then((user) => res.status(201).send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
