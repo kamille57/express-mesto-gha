@@ -1,47 +1,50 @@
-/* eslint-disable consistent-return */
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const generateToken = require('../utils/jwt');
 const User = require('../models/user');
+const {
+  BadRequest,
+  Unauthorized,
+  NotFoundError,
+  ConflictError,
+  InternalServerError,
+} = require('../middlewares/errorHandler');
 
 const SALT_ROUNDS = 10;
 
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find()
     .then((users) => res.status(200).send({ data: users }))
-    .catch((err) => res.status(500).send({ message: err.message }));
+    .catch((err) => next(new InternalServerError(err.message)));
 };
 
-// Получить пользователя по _id
-// Получить пользователя по _id
-module.exports.getUser = async (req, res) => {
+module.exports.getUser = async (req, res, next) => {
   try {
     const { userId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).send({ message: 'Некорректный id пользователя' });
+      throw new BadRequest('Некорректный Id пользователя');
     }
 
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).send({ message: 'Пользователь не найден' });
+      throw new NotFoundError('Нет пользователя с таким id');
     }
 
-    return res.status(200).send(user);
-  } catch (err) {
-    return res.status(500).send({ message: err.message });
+    res.status(200).send(user);
+  } catch (error) {
+    next(new InternalServerError('Ошибка сервера'));
   }
 };
 
-// Создать нового пользователя
-module.exports.createUser = async (req, res) => {
+module.exports.createUser = async (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
 
   if (!email || !password) {
-    return res.status(400).send({ message: 'Email and password are required' });
+    return next(new BadRequest('Email и пароль обязательны'));
   }
 
   try {
@@ -58,48 +61,47 @@ module.exports.createUser = async (req, res) => {
     return res.status(201).send({ email: user.email, id: user._id });
   } catch (err) {
     if (err.name === 'ValidationError') {
-      return res.status(400).send({ message: 'Email and password are required' });
+      return next(new BadRequest('Email и пароль обязательны'));
     } if (err.code === 11000) {
-      return res.status(409).send({ message: 'User with this email already exists' });
+      return next(new ConflictError('Пользователь с таким email уже существует'));
     }
-    return res.status(500).send({ message: 'Server error occurred', error: err });
+    return next(new InternalServerError('Ошибка сервера'));
   }
 };
 
-// залогиниться
-module.exports.login = async (req, res) => {
+module.exports.login = async (req, res, next) => {
   const { email, password } = req.body;
   try {
     const userLogined = await User.findOne({ email }).select('+password');
     if (!email || !password) {
-      return res.status(400).send({ message: 'Email and password are required' });
+      return next(new BadRequest('Email и пароль обязательны'));
     }
     if (!userLogined) {
-      return res.status(401).send({ message: 'Incorrect email or password' });
+      return next(new Unauthorized('Пользователь неавторизован'));
     }
     const matched = await bcrypt.compare(String(password), userLogined.password);
     if (!matched) {
-      return res.status(401).send({ message: 'Incorrect email or password' });
+      return next(new Unauthorized('Неправильная почта или пароль'));
     }
     const token = generateToken({ id: userLogined._id });
     res.cookie('mestoToken', token, { maxAge: 3600000000, httpOnly: true, sameSite: true });
     return res.status(200).send({ token });
   } catch (err) {
     if (err.name === 'ValidationError') {
-      return res.status(400).send({ message: err.message });
+      return next(new BadRequest('Email и пароль обязательны'));
     }
-    return res.status(500).send({ message: 'Server error occurred', error: err });
+    return next(new InternalServerError('Ошибка сервера'));
   }
 };
 
 // Обновить профиль
 module.exports.updateProfile = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { name, about } = req.body;
+  const userId = req.user._id;
+  const { name, about } = req.body;
 
+  try {
     if (!name || !about) {
-      return res.status(400).send({ message: 'Name and about are required' });
+      throw new BadRequest('Email и пароль обязательны');
     }
 
     const user = await User.findByIdAndUpdate(
@@ -109,24 +111,25 @@ module.exports.updateProfile = async (req, res) => {
     );
 
     if (!user) {
-      return res.status(404).send({ message: 'Пользователь не найден' });
+      throw new NotFoundError('Нет пользователя с таким id');
     }
 
     return res.status(200).send({ data: user });
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      return res.status(400).send({ message: err.message });
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      throw new BadRequest('Email и пароль обязательны');
     }
-    return res.status(500).send({ message: 'Server error occurred', error: err });
+
+    throw new InternalServerError('Ошибка сервера');
   }
 };
 
 // Обновить аватар
 module.exports.updateAvatar = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { avatar } = req.body;
+  const userId = req.user._id;
+  const { avatar } = req.body;
 
+  try {
     if (!avatar) {
       return res.status(400).send({ message: 'Avatar is required' });
     }
@@ -138,15 +141,15 @@ module.exports.updateAvatar = async (req, res) => {
     );
 
     if (!user) {
-      return res.status(404).send({ message: 'User not found' });
+      throw new NotFoundError('Нет пользователя с таким id');
     }
 
     return res.status(200).send({ data: user });
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      return res.status(400).send({ message: err.message });
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      throw new BadRequest('Email и пароль обязательны');
     }
 
-    return res.status(500).send({ message: 'Server error occurred', error: err });
+    throw new InternalServerError('Ошибка сервера');
   }
 };
