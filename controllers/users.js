@@ -1,8 +1,8 @@
 /* eslint-disable consistent-return */
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const User = require('../models/user');
 const generateToken = require('../utils/jwt');
+const User = require('../models/user');
 
 const SALT_ROUNDS = 10;
 
@@ -85,7 +85,7 @@ module.exports.login = async (req, res) => {
       return res.status(401).send({ message: 'Incorrect email or password' });
     }
     const token = generateToken({ id: userLogined._id });
-    return res.status(200).json({ message: 'Login successful', token });
+    return res.status(200).send({ token });
   } catch (err) {
     if (err.name === 'ValidationError') {
       return res.status(400).send({ message: err.message });
