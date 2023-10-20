@@ -3,10 +3,13 @@ const router = require('express').Router();
 const {
   login,
   createUser,
-  createUserSchema,
-  loginSchema,
   // signout,
 } = require('../controllers/users');
+
+const {
+  createUserSchema,
+  loginSchema,
+} = require('../models/validationSchemas');
 
 // POST /signin - авторизация пользователя
 router.post('/signin', loginSchema, login);

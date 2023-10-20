@@ -6,11 +6,14 @@ const {
   deleteCard,
   likeCard,
   deleteLike,
+} = require('../controllers/cards');
+
+const {
   createCardSchema,
   likeCardSchema,
   dislikeCardSchema,
   deleteCardSchema,
-} = require('../controllers/cards');
+} = require('../models/validationSchemas');
 
 // GET /cards - возвращает все карточки
 router.get('/cards', getCards);

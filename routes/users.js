@@ -4,10 +4,13 @@ const {
   getUser,
   updateProfile,
   updateAvatar,
+} = require('../controllers/users');
+
+const {
   getUserByIdSchema,
   updateUserProfileSchema,
   updateUserAvatarSchema,
-} = require('../controllers/users');
+} = require('../models/validationSchemas');
 
 // Получить всех пользователей
 router.get('/users', getUsers);
