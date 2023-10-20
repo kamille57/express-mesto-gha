@@ -31,7 +31,7 @@ module.exports.getUser = async (req, res) => {
       return res.status(404).send({ message: 'User not found' });
     }
 
-    res.status(200).send({ data: user });
+    return res.status(200).send({ data: user });
   } catch (err) {
     return res.status(500).send({ message: err.message });
   }
@@ -39,7 +39,9 @@ module.exports.getUser = async (req, res) => {
 
 // Создать нового пользователя
 module.exports.createUser = async (req, res) => {
-  const { name, about, avatar, email, password } = req.body;
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
 
   if (!email || !password) {
     return res.status(400).send({ message: 'Email and password are required' });
