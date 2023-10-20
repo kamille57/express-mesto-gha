@@ -7,10 +7,13 @@ const generateToken = require('../utils/jwt');
 const SALT_ROUNDS = 10;
 
 // Получить всех пользователей
-module.exports.getUsers = (req, res) => {
-  User.find()
-    .then((users) => res.status(200).send({ data: users }))
-    .catch((err) => res.status(500).send({ message: err.message }));
+module.exports.getUsers = async (req, res) => {
+  try {
+    const users = await User.find();
+    return res.status(200).send({ data: users });
+  } catch (err) {
+    return res.status(500).send({ message: err.message });
+  }
 };
 
 // Получить пользователя по _id
@@ -30,31 +33,33 @@ module.exports.getUser = async (req, res) => {
 
     res.status(200).send({ data: user });
   } catch (err) {
-    res.status(500).send({ message: err.message });
+    return res.status(500).send({ message: err.message });
   }
 };
 
 // Создать нового пользователя
 module.exports.createUser = async (req, res) => {
-  const {
-    name, about, avatar, email, password,
-  } = req.body;
+  const { name, about, avatar, email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).send({ message: 'Email and password are required' });
+  }
 
   try {
     const hash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    if (!email || !password) {
-      return res.status(400).send({ message: 'Email and password are required' });
-    }
-
     const user = await User.create({
-      name, about, avatar, email, password: hash,
+      name,
+      about,
+      avatar,
+      email,
+      password: hash,
     });
 
-    res.status(201).send({ email: user.email, id: user._id });
+    return res.status(201).send({ email: user.email, id: user._id });
   } catch (err) {
     if (err.name === 'ValidationError') {
-      return res.status(400).send({ message: err.message });
+      return res.status(400).send({ message: 'Email and password are required' });
     } if (err.code === 11000) {
       return res.status(409).send({ message: 'User with this email already exists' });
     }
@@ -78,7 +83,7 @@ module.exports.login = async (req, res) => {
       return res.status(401).send({ message: 'Incorrect email or password' });
     }
     const token = generateToken({ id: userLogined._id });
-    res.status(200).json({ message: 'Login successful', token });
+    return res.status(200).json({ message: 'Login successful', token });
   } catch (err) {
     if (err.name === 'ValidationError') {
       return res.status(400).send({ message: err.message });
@@ -136,7 +141,7 @@ module.exports.updateAvatar = async (req, res) => {
       return res.status(404).send({ message: 'User not found' });
     }
 
-    res.status(200).send({ data: user });
+    return res.status(200).send({ data: user });
   } catch (err) {
     if (err.name === 'ValidationError') {
       return res.status(400).send({ message: err.message });

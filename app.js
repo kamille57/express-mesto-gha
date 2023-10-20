@@ -20,8 +20,9 @@ const cardsRouter = require('./routes/cards');
 const adminsRouter = require('./routes/admins');
 
 app.use(adminsRouter);
-app.use(usersRouter, auth);
-app.use(cardsRouter, auth);
+app.use(auth);
+app.use(usersRouter);
+app.use(cardsRouter);
 
 // Обработчик для несуществующих маршрутов
 app.use((req, res) => {
