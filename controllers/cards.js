@@ -37,14 +37,28 @@ module.exports.deleteCard = (req, res) => {
     return res.status(400).send({ message: 'Invalid card ID' });
   }
 
-  Card.findByIdAndRemove(cardId)
+  Card.findById(cardId)
     .then((card) => {
       if (!card) {
         return res.status(404).send({ message: 'Card not found' });
       }
-      return res.status(200).send({ data: card });
+
+      // Проверяем, является ли текущий пользователь владельцем карточки
+      if (card.owner.toString() !== req.user._id) {
+        return res.status(403).send({ message: 'Forbidden' });
+      }
+
+      Card.findByIdAndRemove(cardId)
+        .then((deletedCard) => {
+          res.status(200).send({ data: deletedCard });
+        })
+        .catch((err) => {
+          res.status(500).send({ message: 'Internal Server Error', error: err });
+        });
     })
-    .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
+    .catch((err) => {
+      res.status(500).send({ message: 'Internal Server Error', error: err });
+    });
 };
 
 // Add like
@@ -86,7 +100,7 @@ module.exports.deleteLike = (req, res) => {
       if (!card) {
         return res.status(404).send({ message: 'Card not found' });
       }
-      return res.status(200).send({ data: card });
+      res.status(200).send({ data: card });
     })
     .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
 };
