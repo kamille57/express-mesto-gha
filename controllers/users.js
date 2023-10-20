@@ -114,7 +114,7 @@ module.exports.updateProfile = async (req, res) => {
       return res.status(404).send({ message: 'Пользователь не найден' });
     }
 
-    res.status(200).send({ data: user });
+    return res.status(200).send({ data: user });
   } catch (err) {
     if (err.name === 'ValidationError') {
       return res.status(400).send({ message: err.message });

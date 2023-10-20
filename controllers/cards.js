@@ -42,7 +42,7 @@ module.exports.deleteCard = (req, res) => {
       if (!card) {
         return res.status(404).send({ message: 'Card not found' });
       }
-      res.status(200).send({ data: card });
+      return res.status(200).send({ data: card });
     })
     .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
 };
@@ -64,7 +64,7 @@ module.exports.likeCard = (req, res) => {
       if (!card) {
         return res.status(404).send({ message: 'Card not found' });
       }
-      res.status(200).send({ data: card });
+      return res.status(200).send({ data: card });
     })
     .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
 };
@@ -86,7 +86,7 @@ module.exports.deleteLike = (req, res) => {
       if (!card) {
         return res.status(404).send({ message: 'Card not found' });
       }
-      res.status(200).send({ data: card });
+      return res.status(200).send({ data: card });
     })
     .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
 };
