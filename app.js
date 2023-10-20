@@ -7,7 +7,7 @@ const { PORT = 3000 } = process.env;
 const app = express();
 
 app.use(helmet());
-mongoose.connect('mongodb://localhost:27017/mynewdb', {
+mongoose.connect('mongodb://localhost:27017/mestodb', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -16,15 +16,9 @@ app.use(express.json());
 
 const usersRouter = require('./routes/users');
 const cardsRouter = require('./routes/cards');
+const adminsRouter = require('./routes/admins');
 
-app.use((req, res, next) => {
-  req.user = {
-    _id: '6519dcc4bc240f1a286369a5', // вставьте сюда _id созданного в предыдущем пункте пользователя
-  };
-
-  next();
-});
-
+app.use(adminsRouter);
 app.use(usersRouter);
 app.use(cardsRouter);
 

@@ -2,6 +2,9 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const User = require('../models/user');
+const generateToken = require('../utils/jwt');
+
+const SALT_ROUNDS = 10;
 
 // Получить всех пользователей
 module.exports.getUsers = (req, res) => {
@@ -11,99 +14,134 @@ module.exports.getUsers = (req, res) => {
 };
 
 // Получить пользователя по _id
-module.exports.getUser = (req, res) => {
-  const { userId } = req.params;
+module.exports.getUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(userId)) {
-    return res.status(400).send({ message: 'Некорректный id пользователя' });
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).send({ message: 'Invalid user id' });
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+
+    res.status(200).send({ data: user });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
   }
-
-  User.findById(userId)
-    .then((user) => {
-      if (!user) {
-        return res.status(404).send({ message: 'Пользователь не найден' });
-      }
-      res.status(200).send({ data: user });
-    })
-    .catch((err) => res.status(500).send({ message: err.message }));
 };
 
 // Создать нового пользователя
-module.exports.createUser = (req, res) => {
+module.exports.createUser = async (req, res) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
 
-  const hashedPassword = bcrypt.hashSync(password, 10); // хеширование пароля
+  try {
+    const hash = await bcrypt.hash(password, SALT_ROUNDS);
 
-  if (!email || !password) {
-    return res.status(400).send({ message: 'Email and password are required' });
-  }
+    if (!email || !password) {
+      return res.status(400).send({ message: 'Email and password are required' });
+    }
 
-  User.create({
-    name, about, avatar, email, password: hashedPassword,
-  })
-    .then((user) => res.status(201).send({ data: user }))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: err.message });
-      }
-      return res.status(500).send({ message: 'Server error occurred', error: err });
+    const user = await User.create({
+      name, about, avatar, email, password: hash,
     });
+
+    res.status(201).send({ email: user.email, id: user._id });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      return res.status(400).send({ message: err.message });
+    } if (err.code === 11000) {
+      return res.status(409).send({ message: 'User with this email already exists' });
+    }
+    return res.status(500).send({ message: 'Server error occurred', error: err });
+  }
+};
+
+// залогиниться
+module.exports.login = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const userLogined = await User.findOne({ email }).select('+password');
+    if (!email || !password) {
+      return res.status(400).send({ message: 'Email and password are required' });
+    }
+    if (!userLogined) {
+      return res.status(401).send({ message: 'Incorrect email or password' });
+    }
+    const matched = await bcrypt.compare(password, userLogined.password);
+    if (!matched) {
+      throw new Error('Incorrect email or password');
+    }
+    const token = generateToken({ id: userLogined._id });
+    res.status(200).send({ message: 'Login successful', token });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      return res.status(400).send({ message: err.message });
+    }
+    return res.status(500).send({ message: 'Server error occurred', error: err });
+  }
 };
 
 // Обновить профиль
-module.exports.updateProfile = (req, res) => {
-  const userId = req.user._id;
-  const { name, about } = req.body;
+module.exports.updateProfile = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { name, about } = req.body;
 
-  if (!name || !about) {
-    return res.status(400).send({ message: 'Name and about are required' });
+    if (!name || !about) {
+      return res.status(400).send({ message: 'Name and about are required' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { name, about },
+      { new: true, runValidators: true },
+    );
+
+    if (!user) {
+      return res.status(404).send({ message: 'Пользователь не найден' });
+    }
+
+    res.status(200).send({ data: user });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      return res.status(400).send({ message: err.message });
+    }
+    return res.status(500).send({ message: 'Server error occurred', error: err });
   }
-
-  User.findByIdAndUpdate(
-    userId,
-    { name, about },
-    { new: true, runValidators: true },
-  )
-    .then((user) => {
-      if (!user) {
-        return res.status(404).send({ message: 'Пользователь не найден' });
-      }
-      res.status(200).send({ data: user });
-    })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: err.message });
-      }
-      return res.status(500).send({ message: 'Server error occurred', error: err });
-    });
 };
 
 // Обновить аватар
-module.exports.updateAvatar = (req, res) => {
-  const userId = req.user._id;
-  const { avatar } = req.body;
+module.exports.updateAvatar = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { avatar } = req.body;
 
-  if (!avatar) {
-    return res.status(400).send({ message: 'Avatar is required' });
+    if (!avatar) {
+      return res.status(400).send({ message: 'Avatar is required' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { avatar },
+      { new: true, runValidators: true },
+    );
+
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+
+    res.status(200).send({ data: user });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      return res.status(400).send({ message: err.message });
+    }
+
+    return res.status(500).send({ message: 'Server error occurred', error: err });
   }
-
-  User.findByIdAndUpdate(
-    userId,
-    { avatar },
-    { new: true, runValidators: true },
-  )
-    .then((user) => {
-      if (!user) {
-        return res.status(404).send({ message: 'User not found' });
-      }
-      res.status(200).send({ data: user });
-    })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: err.message });
-      }
-      return res.status(500).send({ message: 'Server error occurred', error: err });
-    });
 };
