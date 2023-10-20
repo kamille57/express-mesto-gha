@@ -6,32 +6,29 @@ const User = require('../models/user');
 
 const SALT_ROUNDS = 10;
 
-// Получить всех пользователей
-module.exports.getUsers = async (req, res) => {
-  try {
-    const users = await User.find();
-    return res.status(200).send({ data: users });
-  } catch (err) {
-    return res.status(500).send({ message: err.message });
-  }
+module.exports.getUsers = (req, res) => {
+  User.find()
+    .then((users) => res.status(200).send({ data: users }))
+    .catch((err) => res.status(500).send({ message: err.message }));
 };
 
+// Получить пользователя по _id
 // Получить пользователя по _id
 module.exports.getUser = async (req, res) => {
   try {
     const { userId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).send({ message: 'Invalid user id' });
+      return res.status(400).send({ message: 'Некорректный id пользователя' });
     }
 
     const user = await User.findById(userId);
 
     if (!user) {
-      return res.status(404).send({ message: 'User not found' });
+      return res.status(404).send({ message: 'Пользователь не найден' });
     }
 
-    return res.status(200).send({ data: user });
+    return res.status(200).send(user);
   } catch (err) {
     return res.status(500).send({ message: err.message });
   }
@@ -48,7 +45,7 @@ module.exports.createUser = async (req, res) => {
   }
 
   try {
-    const hash = await bcrypt.hash(password, SALT_ROUNDS);
+    const hash = await bcrypt.hash(String(password), SALT_ROUNDS);
 
     const user = await User.create({
       name,
@@ -80,11 +77,12 @@ module.exports.login = async (req, res) => {
     if (!userLogined) {
       return res.status(401).send({ message: 'Incorrect email or password' });
     }
-    const matched = await bcrypt.compare(password, userLogined.password);
+    const matched = await bcrypt.compare(String(password), userLogined.password);
     if (!matched) {
       return res.status(401).send({ message: 'Incorrect email or password' });
     }
     const token = generateToken({ id: userLogined._id });
+    res.cookie('mestoToken', token, { maxAge: 3600000000, httpOnly: true, sameSite: true });
     return res.status(200).send({ token });
   } catch (err) {
     if (err.name === 'ValidationError') {
