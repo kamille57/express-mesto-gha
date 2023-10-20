@@ -75,10 +75,10 @@ module.exports.login = async (req, res) => {
     }
     const matched = await bcrypt.compare(password, userLogined.password);
     if (!matched) {
-      throw new Error('Incorrect email or password');
+      return res.status(401).send({ message: 'Incorrect email or password' });
     }
     const token = generateToken({ id: userLogined._id });
-    res.status(200).send({ message: 'Login successful', token });
+    res.status(200).json({ message: 'Login successful', token });
   } catch (err) {
     if (err.name === 'ValidationError') {
       return res.status(400).send({ message: err.message });

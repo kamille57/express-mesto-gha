@@ -14,13 +14,14 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
 
 app.use(express.json());
 
+const auth = require('./middlewares/auth');
 const usersRouter = require('./routes/users');
 const cardsRouter = require('./routes/cards');
 const adminsRouter = require('./routes/admins');
 
 app.use(adminsRouter);
-app.use(usersRouter);
-app.use(cardsRouter);
+app.use(usersRouter, auth);
+app.use(cardsRouter, auth);
 
 // Обработчик для несуществующих маршрутов
 app.use((req, res) => {
