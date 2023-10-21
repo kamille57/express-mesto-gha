@@ -2,20 +2,21 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const generateToken = require('../utils/jwt');
 const User = require('../models/user');
-const {
-  BadRequest,
-  Unauthorized,
-  NotFoundError,
-  ConflictError,
-  InternalServerError,
-} = require('../middlewares/errorHandler');
+const { BadRequestError } = require('../errors/BadRequestError');
+const { ConflictError } = require('../errors/ConflictError');
+const { InternalServerError } = require('../errors/InternalServerError');
+const { NotFoundError } = require('../errors/NotFoundError');
+const { UnauthorizedError } = require('../errors/UnauthorizedError');
 
 const SALT_ROUNDS = 10;
 
-module.exports.getUsers = (req, res, next) => {
-  User.find()
-    .then((users) => res.status(200).send({ data: users }))
-    .catch((err) => next(new InternalServerError(err.message)));
+module.exports.getUsers = async (req, res, next) => {
+  try {
+    const users = await User.find();
+    res.status(200).send({ users });
+  } catch (error) {
+    next(error);
+  }
 };
 
 module.exports.getUser = async (req, res, next) => {
@@ -23,7 +24,7 @@ module.exports.getUser = async (req, res, next) => {
     const { userId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      throw new BadRequest('Некорректный Id пользователя');
+      throw new BadRequestError('Некорректный Id пользователя');
     }
 
     const user = await User.findById(userId);
@@ -34,7 +35,7 @@ module.exports.getUser = async (req, res, next) => {
 
     res.status(200).send(user);
   } catch (error) {
-    next(new InternalServerError('Ошибка сервера'));
+    next(error);
   }
 };
 
@@ -44,7 +45,7 @@ module.exports.createUser = async (req, res, next) => {
   } = req.body;
 
   if (!email || !password) {
-    return next(new BadRequest('Email и пароль обязательны'));
+    return next(new BadRequestError('Email и пароль обязательны'));
   }
 
   try {
@@ -61,7 +62,7 @@ module.exports.createUser = async (req, res, next) => {
     return res.status(201).send({ email: user.email, id: user._id });
   } catch (err) {
     if (err.name === 'ValidationError') {
-      return next(new BadRequest('Email и пароль обязательны'));
+      return next(new BadRequestError('Email и пароль обязательны'));
     } if (err.code === 11000) {
       return next(new ConflictError('Пользователь с таким email уже существует'));
     }
@@ -74,34 +75,34 @@ module.exports.login = async (req, res, next) => {
   try {
     const userLogined = await User.findOne({ email }).select('+password');
     if (!email || !password) {
-      return next(new BadRequest('Email и пароль обязательны'));
+      return next(new BadRequestError('Email и пароль обязательны'));
     }
     if (!userLogined) {
-      return next(new Unauthorized('Пользователь неавторизован'));
+      return next(new UnauthorizedError('Пользователь неавторизован'));
     }
     const matched = await bcrypt.compare(String(password), userLogined.password);
     if (!matched) {
-      return next(new Unauthorized('Неправильная почта или пароль'));
+      return next(new UnauthorizedError('Неправильная почта или пароль'));
     }
     const token = generateToken({ id: userLogined._id });
     res.cookie('mestoToken', token, { maxAge: 3600000000, httpOnly: true, sameSite: true });
     return res.status(200).send({ token });
   } catch (err) {
     if (err.name === 'ValidationError') {
-      return next(new BadRequest('Email и пароль обязательны'));
+      return next(new BadRequestError('Email и пароль обязательны'));
     }
     return next(new InternalServerError('Ошибка сервера'));
   }
 };
 
 // Обновить профиль
-module.exports.updateProfile = async (req, res) => {
+module.exports.updateProfile = async (req, res, next) => {
   const userId = req.user._id;
   const { name, about } = req.body;
 
   try {
     if (!name || !about) {
-      throw new BadRequest('Email и пароль обязательны');
+      throw new BadRequestError('Name and About fields are required');
     }
 
     const user = await User.findByIdAndUpdate(
@@ -111,27 +112,26 @@ module.exports.updateProfile = async (req, res) => {
     );
 
     if (!user) {
-      throw new NotFoundError('Нет пользователя с таким id');
+      throw new NotFoundError('User not found');
     }
 
     return res.status(200).send({ data: user });
   } catch (error) {
     if (error.name === 'ValidationError') {
-      throw new BadRequest('Email и пароль обязательны');
+      return next(new BadRequestError('Name and About fields are required'));
     }
 
-    throw new InternalServerError('Ошибка сервера');
+    return next(new InternalServerError('Server error'));
   }
 };
 
-// Обновить аватар
-module.exports.updateAvatar = async (req, res) => {
+module.exports.updateAvatar = async (req, res, next) => {
   const userId = req.user._id;
   const { avatar } = req.body;
 
   try {
     if (!avatar) {
-      return res.status(400).send({ message: 'Avatar is required' });
+      throw new BadRequestError('Avatar is required');
     }
 
     const user = await User.findByIdAndUpdate(
@@ -141,15 +141,15 @@ module.exports.updateAvatar = async (req, res) => {
     );
 
     if (!user) {
-      throw new NotFoundError('Нет пользователя с таким id');
+      throw new NotFoundError('User not found');
     }
 
     return res.status(200).send({ data: user });
   } catch (error) {
     if (error.name === 'ValidationError') {
-      throw new BadRequest('Email и пароль обязательны');
+      return next(new BadRequestError('Avatar is required'));
     }
 
-    throw new InternalServerError('Ошибка сервера');
+    return next(new InternalServerError('Server error'));
   }
 };

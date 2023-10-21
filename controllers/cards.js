@@ -2,94 +2,108 @@
 /* eslint-disable consistent-return */
 const mongoose = require('mongoose');
 const Card = require('../models/card');
+const { BadRequestError } = require('../errors/BadRequestError');
+const { InternalServerError } = require('../errors/InternalServerError');
+const { NotFoundError } = require('../errors/NotFoundError');
 
 // Get all cards
-module.exports.getCards = (req, res) => {
-  Card.find()
-    .then((cards) => res.status(200).send({ data: cards }))
-    .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
+module.exports.getCards = async (req, res, next) => {
+  try {
+    const cards = await Card.find();
+    res.status(200).send({ data: cards });
+  } catch (error) {
+    next(error);
+  }
 };
 
 // Create a new card
-module.exports.createCard = (req, res) => {
-  console.log(req.user._id); // _id будет доступен
-  const { name, link } = req.body;
+module.exports.createCard = async (req, res, next) => {
+  try {
+    console.log(req.user._id); // _id будет доступен
+    const { name, link } = req.body;
 
-  if (!name || !link) {
-    return res.status(400).send({ message: 'Name and link are required' });
+    if (!name || !link) {
+      return res.status(400).send({ message: 'Name and link are required' });
+    }
+
+    const card = await Card.create({ name, link, owner: req.user._id });
+    res.status(201).send({ data: card });
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      next(new BadRequestError(error.message));
+    } else {
+      next(new InternalServerError('Server error occurred'));
+    }
   }
-
-  Card.create({ name, link, owner: req.user._id })
-    .then((card) => res.status(201).send({ data: card }))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(400).send({ message: err.message });
-      }
-      return res.status(500).send({ message: 'Server error occurred', error: err });
-    });
 };
 
 // Delete card
-module.exports.deleteCard = async (req, res) => {
+module.exports.deleteCard = async (req, res, next) => {
   try {
     const { cardId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(cardId)) {
-      return res.status(400).send({ message: 'Invalid card ID' });
+      throw new BadRequestError('Invalid card ID');
     }
 
     const card = await Card.findByIdAndRemove(cardId);
 
     if (!card) {
-      return res.status(404).send({ message: 'Card not found' });
+      throw new NotFoundError('Card not found');
     }
 
     res.status(200).send({ data: card });
-  } catch (err) {
-    res.status(500).send({ message: 'Internal Server Error', error: err });
+  } catch (error) {
+    next(error);
   }
 };
 
 // Add like
-module.exports.likeCard = (req, res) => {
-  const { cardId } = req.params;
+module.exports.likeCard = async (req, res, next) => {
+  try {
+    const { cardId } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(cardId)) {
-    return res.status(400).send({ message: 'Invalid card ID' });
+    if (!mongoose.Types.ObjectId.isValid(cardId)) {
+      throw new BadRequestError('Invalid card ID');
+    }
+
+    const card = await Card.findByIdAndUpdate(
+      cardId,
+      { $addToSet: { likes: req.user._id } },
+      { new: true },
+    );
+
+    if (!card) {
+      throw new NotFoundError('Card not found');
+    }
+
+    res.status(200).send({ data: card });
+  } catch (error) {
+    next(error);
   }
-
-  Card.findByIdAndUpdate(
-    cardId,
-    { $addToSet: { likes: req.user._id } },
-    { new: true },
-  )
-    .then((card) => {
-      if (!card) {
-        return res.status(404).send({ message: 'Card not found' });
-      }
-      return res.status(200).send({ data: card });
-    })
-    .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
 };
 
 // Remove like
-module.exports.deleteLike = (req, res) => {
-  const { cardId } = req.params;
+module.exports.deleteLike = async (req, res, next) => {
+  try {
+    const { cardId } = req.params;
 
-  if (!mongoose.Types.ObjectId.isValid(cardId)) {
-    return res.status(400).send({ message: 'Invalid card ID' });
+    if (!mongoose.Types.ObjectId.isValid(cardId)) {
+      throw new BadRequestError('Invalid card ID');
+    }
+
+    const card = await Card.findByIdAndUpdate(
+      cardId,
+      { $pull: { likes: req.user._id } },
+      { new: true },
+    );
+
+    if (!card) {
+      throw new NotFoundError('Card not found');
+    }
+
+    res.status(200).send({ data: card });
+  } catch (error) {
+    next(error);
   }
-
-  Card.findByIdAndUpdate(
-    cardId,
-    { $pull: { likes: req.user._id } },
-    { new: true },
-  )
-    .then((card) => {
-      if (!card) {
-        return res.status(404).send({ message: 'Card not found' });
-      }
-      res.status(200).send({ data: card });
-    })
-    .catch((err) => res.status(500).send({ message: 'Internal Server Error', error: err }));
 };
