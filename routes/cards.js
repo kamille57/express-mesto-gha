@@ -1,5 +1,4 @@
 const router = require('express').Router();
-const { celebrate } = require('celebrate');
 
 const {
   getCards,
@@ -20,15 +19,15 @@ const {
 router.get('/cards', getCards);
 
 // POST /cards - создание
-router.post('/cards', celebrate(createCardSchema), createCard);
+router.post('/cards', createCardSchema, createCard);
 
 // DELETE /cards/:cardId - удалить карточку
-router.delete('/cards/:cardId', celebrate(deleteCardSchema), deleteCard);
+router.delete('/cards/:cardId', deleteCardSchema, deleteCard);
 
 // PUT /cards/:cardId/likes — поставить лайк карточке
-router.put('/cards/:cardId/likes', celebrate(likeCardSchema), likeCard);
+router.put('/cards/:cardId/likes', likeCardSchema, likeCard);
 
 // DELETE /cards/:cardId/likes — убрать лайк с карточки
-router.delete('/cards/:cardId/likes', celebrate(dislikeCardSchema), deleteLike);
+router.delete('/cards/:cardId/likes', dislikeCardSchema, deleteLike);
 
 module.exports = router;
