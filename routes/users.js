@@ -2,6 +2,7 @@ const router = require('express').Router();
 
 const {
   getUsers,
+  getUserInfo,
   getUser,
   updateProfile,
   updateAvatar,
@@ -15,6 +16,9 @@ const {
 
 // Получить всех пользователей
 router.get('/users', getUsers);
+
+// Получить всех пользователей
+router.get('/users/me', getUserInfo);
 
 // Получить пользователя по _id
 router.get('/users/:userId', getUserByIdSchema, getUser);

@@ -25,9 +25,8 @@ module.exports.getUsers = async (req, res, next) => {
 };
 
 module.exports.getUser = async (req, res, next) => {
+  const { userId } = req.params;
   try {
-    const { userId } = req.params;
-
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       throw new BadRequestError('Некорректный Id пользователя');
     }
@@ -39,6 +38,23 @@ module.exports.getUser = async (req, res, next) => {
     }
 
     return res.status(200).send({ data: user });
+  } catch (error) {
+    return next(error);
+  }
+};
+
+module.exports.getUserInfo = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      const notFoundError = new NotFoundError('Пользователь не найден');
+      return next(notFoundError);
+    }
+
+    const userData = user.toObject();
+    delete userData.password;
+
+    return res.status(200).json(userData);
   } catch (error) {
     return next(error);
   }
@@ -105,6 +121,7 @@ module.exports.login = async (req, res, next) => {
 
 module.exports.updateProfile = async (req, res, next) => {
   const userId = req.user.id; // Change req.user.id to req.user._id
+  console.log(userId);
   const { name, about } = req.body;
   try {
     if (!name || !about) {
@@ -116,7 +133,6 @@ module.exports.updateProfile = async (req, res, next) => {
       { name, about },
       { new: true, runValidators: true },
     );
-
     if (!user) {
       throw new NotFoundError('User not found');
     }
