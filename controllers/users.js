@@ -40,10 +40,7 @@ module.exports.getUser = async (req, res, next) => {
 
     return res.status(200).send({ data: user });
   } catch (error) {
-    if (error.name === 'CastError') {
-      return next(new BadRequestError('Некорректный Id пользователя'));
-    }
-    return next(new InternalServerError('Internal server error'));
+    return next(error);
   }
 };
 
@@ -53,7 +50,7 @@ module.exports.createUser = async (req, res, next) => {
   } = req.body;
 
   if (!email || !password) {
-    return next(new BadRequestError('Email и пароль обязательны'));
+    throw next(new BadRequestError('Email и пароль обязательны'));
   }
 
   try {
@@ -108,9 +105,7 @@ module.exports.login = async (req, res, next) => {
 
 module.exports.updateProfile = async (req, res, next) => {
   const userId = req.user.id; // Change req.user.id to req.user._id
-  console.log('нужно тут', userId);
   const { name, about } = req.body;
-  console.log({ name, about });
   try {
     if (!name || !about) {
       throw new BadRequestError('Name and About fields are required');

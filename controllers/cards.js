@@ -21,15 +21,15 @@ module.exports.getCards = async (req, res, next) => {
 };
 
 module.exports.createCard = async (req, res, next) => {
+  const { name, link } = req.body;
+  console.log(req.body);
+  if (!name || !link) {
+    throw new BadRequestError('Имя и ссылка - необходимые поля');
+  }
   try {
-    console.log(req.user._id); // _id будет доступен
-    const { name, link } = req.body;
+    console.log(req.user.id); // _id будет доступен
 
-    if (!name || !link) {
-      throw new BadRequestError('Имя и ссылка - необходимые поля');
-    }
-
-    const card = await Card.create({ name, link, owner: req.user._id });
+    const card = await Card.create({ name, link, owner: req.user.id });
     res.status(201).send({ data: card });
   } catch (error) {
     if (error.name === 'ValidationError') {
