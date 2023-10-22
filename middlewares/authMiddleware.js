@@ -4,7 +4,7 @@ const authMiddleware = async (req, res, next) => {
   let payload;
   try {
     const token = req.cookies.mestoToken;
-    //  console.log(token);
+    console.log(token);
 
     if (!token) {
       return res.status(401).send({ message: 'Токен не получен' });
@@ -22,6 +22,7 @@ const authMiddleware = async (req, res, next) => {
     return res.status(500).send({ message: error.message });
   }
   req.user = payload;
+  console.log('user from auth');
   return next();
 };
 

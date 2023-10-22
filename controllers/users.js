@@ -12,20 +12,22 @@ const SALT_ROUNDS = 10;
 
 module.exports.getUsers = async (req, res, next) => {
   try {
+    // Проверяем, авторизован ли пользователь
     if (!req.user) {
       throw new UnauthorizedError('Unauthorized');
     }
 
     const users = await User.find();
-    return res.send({ data: users });
+    res.status(200).send({ data: users });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
 module.exports.getUser = async (req, res, next) => {
   try {
     const { userId } = req.params;
+
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       throw new BadRequestError('Некорректный Id пользователя');
     }
@@ -36,9 +38,9 @@ module.exports.getUser = async (req, res, next) => {
       throw new NotFoundError('Пользователь не найден');
     }
 
-    return res.status(200).send({ data: user });
+    res.status(200).send({ data: user });
   } catch (error) {
-    return next(error);
+    next(error);
   }
 };
 
@@ -62,7 +64,12 @@ module.exports.createUser = async (req, res, next) => {
       password: hash,
     });
 
-    return res.status(201).send({ email: user.email });
+    return res.status(201).send({
+      name: user.name,
+      about: user.about,
+      avatar: user.avatar,
+      email: user.email,
+    });
   } catch (err) {
     if (err.name === 'ValidationError') {
       return next(new BadRequestError('Email и пароль обязательны'));
@@ -77,6 +84,7 @@ module.exports.login = async (req, res, next) => {
   const { email, password } = req.body;
   try {
     const userLogined = await User.findOne({ email }).select('+password');
+    console.log('юзер из логина', userLogined._id);
     if (!email || !password) {
       return next(new BadRequestError('Email и пароль обязательны'));
     }
@@ -87,14 +95,9 @@ module.exports.login = async (req, res, next) => {
     if (!matched) {
       return next(new UnauthorizedError('Неправильная почта или пароль'));
     }
-    const token = generateToken({ email });
+    const token = generateToken({ id: userLogined._id });
     res.cookie('mestoToken', token, { maxAge: 3600000000, httpOnly: true, sameSite: true });
-    return res.status(200).send({
-      email: userLogined.email,
-      name: userLogined.name,
-      about: userLogined.about,
-      avatar: userLogined.avatar,
-    });
+    return res.status(201).send({ email, id: userLogined._id });
   } catch (err) {
     if (err.name === 'ValidationError') {
       return next(new BadRequestError('Email и пароль обязательны'));
@@ -103,11 +106,11 @@ module.exports.login = async (req, res, next) => {
   }
 };
 
-// Обновить профиль
 module.exports.updateProfile = async (req, res, next) => {
-  const userId = req.user.id;
+  const userId = req.user.id; // Change req.user.id to req.user._id
+  console.log('нужно тут', userId);
   const { name, about } = req.body;
-  console.log(userId);
+  console.log({ name, about });
   try {
     if (!name || !about) {
       throw new BadRequestError('Name and About fields are required');
@@ -123,35 +126,39 @@ module.exports.updateProfile = async (req, res, next) => {
       throw new NotFoundError('User not found');
     }
 
-    return res.status(200).send({ data: user });
-  } catch (error) {
-    if (error.name === 'ValidationError') {
+    return res.status(200).send({ name, about });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
       return next(new BadRequestError('Name and About fields are required'));
     }
-    return next(new InternalServerError('Server error'));
+    return next(new InternalServerError('Internal server error'));
   }
 };
 
 module.exports.updateAvatar = async (req, res, next) => {
+  const userId = req.user.id;
+  const { avatar } = req.body;
+
   try {
-    const userId = req.user.id; // Исправлено на req.user.id
-    const { avatar } = req.body;
     if (!avatar) {
       throw new BadRequestError('Avatar is required');
     }
+
     const user = await User.findByIdAndUpdate(
       userId,
       { avatar },
       { new: true, runValidators: true },
     );
+
     if (!user) {
       throw new NotFoundError('User not found');
     }
-    return res.status(200).send({ data: user });
+
+    return res.status(200).send({ avatar });
   } catch (err) {
     if (err.name === 'ValidationError') {
       return next(new BadRequestError('Avatar is required'));
     }
-    return next(new InternalServerError('Ошибка сервера'));
+    return next(new InternalServerError('Internal server error'));
   }
 };
