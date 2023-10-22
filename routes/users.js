@@ -1,5 +1,4 @@
 const router = require('express').Router();
-const { celebrate } = require('celebrate');
 
 const {
   getUsers,

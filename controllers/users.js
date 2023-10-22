@@ -65,7 +65,7 @@ module.exports.createUser = async (req, res, next) => {
       password: hash,
     });
 
-    return res.status(201).send({ email: user.email, id: user._id });
+    return res.status(201).send({ email: user.email });
   } catch (err) {
     if (err.name === 'ValidationError') {
       return next(new BadRequestError('Email и пароль обязательны'));
