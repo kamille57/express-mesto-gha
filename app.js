@@ -17,9 +17,9 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   useUnifiedTopology: true,
 });
 
+app.use(router);
 app.use(errors());
 app.use(errorsHandler);
-app.use(router);
 
 // Обработчик для несуществующих маршрутов
 app.use((req, res) => {

@@ -12,8 +12,13 @@ const SALT_ROUNDS = 10;
 
 module.exports.getUsers = async (req, res, next) => {
   try {
+    // Проверяем, авторизован ли пользователь
+    if (!req.user) {
+      throw new UnauthorizedError('Unauthorized');
+    }
+
     const users = await User.find();
-    res.status(200).send({ users });
+    res.status(200).send({ data: users });
   } catch (error) {
     next(error);
   }
