@@ -81,28 +81,25 @@ module.exports.createUser = async (req, res, next) => {
 };
 
 module.exports.login = async (req, res, next) => {
-  const { email, password } = req.body;
   try {
-    const userLogined = await User.findOne({ email }).select('+password');
-    console.log('юзер из логина', userLogined._id);
-    if (!email || !password) {
-      return next(new BadRequestError('Email и пароль обязательны'));
+    const { email, password } = req.body;
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) {
+      throw new UnauthorizedError('Неправильная почта или пароль');
     }
-    if (!userLogined) {
-      return next(new UnauthorizedError('Пользователь неавторизован'));
+
+    const isValidPassword = await bcrypt.compare(String(password), user.password);
+
+    if (!isValidPassword) {
+      throw new UnauthorizedError('Неправильная почта или пароль');
     }
-    const matched = await bcrypt.compare(String(password), userLogined.password);
-    if (!matched) {
-      return next(new UnauthorizedError('Неправильная почта или пароль'));
-    }
-    const token = generateToken({ id: userLogined._id });
+
+    const token = generateToken({ id: user._id });
     res.cookie('mestoToken', token, { maxAge: 3600000000, httpOnly: true, sameSite: true });
-    return res.status(201).send({ email, id: userLogined._id });
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      return next(new BadRequestError('Email и пароль обязательны'));
-    }
-    return next(new InternalServerError('Ошибка сервера'));
+    return res.status(201).send({ email, id: user._id });
+  } catch (error) {
+    return next(error);
   }
 };
 
@@ -154,7 +151,7 @@ module.exports.updateAvatar = async (req, res, next) => {
       throw new NotFoundError('User not found');
     }
 
-    return res.status(200).send({ avatar });
+    return res.status(200).send({ user });
   } catch (err) {
     if (err.name === 'ValidationError') {
       return next(new BadRequestError('Avatar is required'));
