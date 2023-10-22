@@ -12,23 +12,20 @@ const SALT_ROUNDS = 10;
 
 module.exports.getUsers = async (req, res, next) => {
   try {
-    console.log(req.user);
-    // Проверяем, авторизован ли пользователь
     if (!req.user) {
       throw new UnauthorizedError('Unauthorized');
     }
 
     const users = await User.find();
-    res.status(200).send({ data: users });
+    return res.send({ data: users });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
 module.exports.getUser = async (req, res, next) => {
   try {
     const { userId } = req.params;
-
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       throw new BadRequestError('Некорректный Id пользователя');
     }
@@ -39,9 +36,9 @@ module.exports.getUser = async (req, res, next) => {
       throw new NotFoundError('Пользователь не найден');
     }
 
-    res.status(200).send({ data: user });
+    return res.status(200).send({ data: user });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -93,10 +90,10 @@ module.exports.login = async (req, res, next) => {
     const token = generateToken({ email });
     res.cookie('mestoToken', token, { maxAge: 3600000000, httpOnly: true, sameSite: true });
     return res.status(200).send({
+      email: userLogined.email,
       name: userLogined.name,
       about: userLogined.about,
       avatar: userLogined.avatar,
-      email: userLogined.email,
     });
   } catch (err) {
     if (err.name === 'ValidationError') {
@@ -106,11 +103,11 @@ module.exports.login = async (req, res, next) => {
   }
 };
 
+// Обновить профиль
 module.exports.updateProfile = async (req, res, next) => {
   const userId = req.user.id;
-  console.log(userId);
   const { name, about } = req.body;
-
+  console.log(userId);
   try {
     if (!name || !about) {
       throw new BadRequestError('Name and About fields are required');
@@ -127,38 +124,34 @@ module.exports.updateProfile = async (req, res, next) => {
     }
 
     return res.status(200).send({ data: user });
-  } catch (err) {
-    if (err.name === 'ValidationError') {
+  } catch (error) {
+    if (error.name === 'ValidationError') {
       return next(new BadRequestError('Name and About fields are required'));
     }
-    return next(new InternalServerError('Internal server error'));
+    return next(new InternalServerError('Server error'));
   }
 };
 
 module.exports.updateAvatar = async (req, res, next) => {
-  const userId = req.user.id;
-  const { avatar } = req.body;
-
   try {
+    const userId = req.user.id; // Исправлено на req.user.id
+    const { avatar } = req.body;
     if (!avatar) {
       throw new BadRequestError('Avatar is required');
     }
-
     const user = await User.findByIdAndUpdate(
       userId,
       { avatar },
       { new: true, runValidators: true },
     );
-
     if (!user) {
       throw new NotFoundError('User not found');
     }
-
     return res.status(200).send({ data: user });
   } catch (err) {
     if (err.name === 'ValidationError') {
       return next(new BadRequestError('Avatar is required'));
     }
-    return next(new InternalServerError('Internal server error'));
+    return next(new InternalServerError('Ошибка сервера'));
   }
 };
