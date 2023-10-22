@@ -90,7 +90,7 @@ module.exports.login = async (req, res, next) => {
     if (!matched) {
       return next(new UnauthorizedError('Неправильная почта или пароль'));
     }
-    const token = generateToken({ id: userLogined._id });
+    const token = generateToken({ email });
     res.cookie('mestoToken', token, { maxAge: 3600000000, httpOnly: true, sameSite: true });
     return res.status(200).send({ token });
   } catch (err) {
