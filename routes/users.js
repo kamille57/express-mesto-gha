@@ -18,12 +18,12 @@ const {
 router.get('/users', getUsers);
 
 // Получить пользователя по _id
-router.get('/users/:userId', celebrate({ params: getUserByIdSchema }), getUser);
+router.get('/users/:userId', getUserByIdSchema, getUser);
 
 // Обновить профиль
-router.patch('/users/me', celebrate({ body: updateUserProfileSchema }), updateProfile);
+router.patch('/users/me', updateUserProfileSchema, updateProfile);
 
 // Обновить аватар
-router.patch('/users/me/avatar', celebrate({ body: updateUserAvatarSchema }), updateAvatar);
+router.patch('/users/me/avatar', updateUserAvatarSchema, updateAvatar);
 
 module.exports = router;
