@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { celebrate } = require('celebrate'); // добавляем валидацию через celebrate
+const { celebrate } = require('celebrate');
 
 const {
   getUsers,
@@ -18,12 +18,12 @@ const {
 router.get('/users', getUsers);
 
 // Получить пользователя по _id
-router.get('/users/:userId', celebrate(getUserByIdSchema), getUser); // используем celebrate для валидации
+router.get('/users/:userId', celebrate({ params: getUserByIdSchema }), getUser);
 
 // Обновить профиль
-router.patch('/users/me', celebrate(updateUserProfileSchema), updateProfile); // используем celebrate для валидации
+router.patch('/users/me', celebrate({ body: updateUserProfileSchema }), updateProfile);
 
 // Обновить аватар
-router.patch('/users/me/avatar', celebrate(updateUserAvatarSchema), updateAvatar); // используем celebrate для валидации
+router.patch('/users/me/avatar', celebrate({ body: updateUserAvatarSchema }), updateAvatar);
 
 module.exports = router;
