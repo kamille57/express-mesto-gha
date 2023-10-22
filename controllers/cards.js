@@ -6,7 +6,7 @@ const { BadRequestError } = require('../errors/BadRequestError');
 const { InternalServerError } = require('../errors/InternalServerError');
 const { NotFoundError } = require('../errors/NotFoundError');
 
-// Get all cards
+// Получить все карты
 module.exports.getCards = async (req, res, next) => {
   try {
     const cards = await Card.find();
@@ -16,14 +16,14 @@ module.exports.getCards = async (req, res, next) => {
   }
 };
 
-// Create a new card
+// Создать новую карту
 module.exports.createCard = async (req, res, next) => {
   try {
     console.log(req.user._id); // _id будет доступен
     const { name, link } = req.body;
 
     if (!name || !link) {
-      return res.status(400).send({ message: 'Name and link are required' });
+      return res.status(400).send({ message: 'Необходимо указать название и ссылку' });
     }
 
     const card = await Card.create({ name, link, owner: req.user._id });
@@ -32,24 +32,24 @@ module.exports.createCard = async (req, res, next) => {
     if (error.name === 'ValidationError') {
       next(new BadRequestError(error.message));
     } else {
-      next(new InternalServerError('Server error occurred'));
+      next(new InternalServerError('Произошла ошибка на сервере'));
     }
   }
 };
 
-// Delete card
+// Удалить карту
 module.exports.deleteCard = async (req, res, next) => {
   try {
     const { cardId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(cardId)) {
-      throw new BadRequestError('Invalid card ID');
+      throw new BadRequestError('Неверный ID картинки');
     }
 
     const card = await Card.findByIdAndRemove(cardId);
 
     if (!card) {
-      throw new NotFoundError('Card not found');
+      throw new NotFoundError('Картинка не найдена');
     }
 
     res.status(200).send({ data: card });
@@ -58,13 +58,13 @@ module.exports.deleteCard = async (req, res, next) => {
   }
 };
 
-// Add like
+// Добавить лайк
 module.exports.likeCard = async (req, res, next) => {
   try {
     const { cardId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(cardId)) {
-      throw new BadRequestError('Invalid card ID');
+      throw new BadRequestError('Неверный ID картинки');
     }
 
     const card = await Card.findByIdAndUpdate(
@@ -74,7 +74,7 @@ module.exports.likeCard = async (req, res, next) => {
     );
 
     if (!card) {
-      throw new NotFoundError('Card not found');
+      throw new NotFoundError('Картинка не найдена');
     }
 
     res.status(200).send({ data: card });
@@ -83,13 +83,13 @@ module.exports.likeCard = async (req, res, next) => {
   }
 };
 
-// Remove like
+// Удалить лайк
 module.exports.deleteLike = async (req, res, next) => {
   try {
     const { cardId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(cardId)) {
-      throw new BadRequestError('Invalid card ID');
+      throw new BadRequestError('Неверный ID картинки');
     }
 
     const card = await Card.findByIdAndUpdate(
@@ -99,7 +99,7 @@ module.exports.deleteLike = async (req, res, next) => {
     );
 
     if (!card) {
-      throw new NotFoundError('Card not found');
+      throw new NotFoundError('Картинка не найдена');
     }
 
     res.status(200).send({ data: card });
