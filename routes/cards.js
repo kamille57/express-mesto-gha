@@ -20,15 +20,15 @@ const {
 router.get('/cards', getCards);
 
 // POST /cards - создание
-router.post('/cards', celebrate({ body: createCardSchema }), createCard);
+router.post('/cards', celebrate(createCardSchema), createCard);
 
 // DELETE /cards/:cardId - удалить карточку
-router.delete('/cards/:cardId', celebrate({ params: deleteCardSchema }), deleteCard);
+router.delete('/cards/:cardId', celebrate(deleteCardSchema), deleteCard);
 
 // PUT /cards/:cardId/likes — поставить лайк карточке
-router.put('/cards/:cardId/likes', celebrate({ params: likeCardSchema }), likeCard);
+router.put('/cards/:cardId/likes', celebrate(likeCardSchema), likeCard);
 
 // DELETE /cards/:cardId/likes — убрать лайк с карточки
-router.delete('/cards/:cardId/likes', celebrate({ params: dislikeCardSchema }), deleteLike);
+router.delete('/cards/:cardId/likes', celebrate(dislikeCardSchema), deleteLike);
 
 module.exports = router;

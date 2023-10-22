@@ -35,10 +35,10 @@ module.exports.getUser = async (req, res, next) => {
     const user = await User.findById(userId);
 
     if (!user) {
-      throw new NotFoundError('Нет пользователя с таким id');
+      throw new NotFoundError('Пользователь не найден');
     }
 
-    res.status(200).send(user);
+    res.status(200).send({ data: user });
   } catch (error) {
     next(error);
   }
@@ -120,13 +120,13 @@ module.exports.updateProfile = async (req, res, next) => {
       throw new NotFoundError('User not found');
     }
 
-    return res.status(200).send({ data: user });
+    res.status(200).send({ data: user });
   } catch (error) {
     if (error.name === 'ValidationError') {
-      return next(new BadRequestError('Name and About fields are required'));
+      next(new BadRequestError('Name and About fields are required'));
+    } else {
+      next(new InternalServerError('Server error'));
     }
-
-    return next(new InternalServerError('Server error'));
   }
 };
 
