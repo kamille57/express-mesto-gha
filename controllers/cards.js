@@ -42,27 +42,19 @@ module.exports.createCard = async (req, res, next) => {
 
 // Удалить карточку
 module.exports.deleteCard = async (req, res, next) => {
-  const { cardId } = req.params;
-  const { userId } = req.user; // Идентификатор текущего пользователя
-  console.log('cardId', req.params);
-  console.log('userId', req.user);
-  if (!mongoose.Types.ObjectId.isValid(cardId)) {
-    throw new BadRequestError('Неверный ID карточки');
-  }
   try {
+    const { cardId } = req.params;
     const card = await Card.findById(cardId);
-    console.log(card);
     if (!card) {
-      throw new NotFoundError('Карточка не найдена');
+      throw new NotFoundError('Карточка с указанным _id не найдена');
     }
 
-    if (userId !== card.owner) { // Проверка, что карточка принадлежит текущему пользователю
-      throw new ForbiddenError('У вас нет доступа к этой карточке');
+    if (card.owner.toString() !== req.user.id) {
+      throw new ForbiddenError('Недостаточно прав для удаления карточки');
     }
 
-    await Card.findByIdAndRemove(cardId);
-
-    res.status(200).send({ data: card });
+    await Card.findByIdAndDelete(cardId);
+    return res.status(200).json({ message: 'Карточка удалена' });
   } catch (error) {
     next(error);
   }
