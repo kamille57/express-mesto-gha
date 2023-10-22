@@ -92,7 +92,12 @@ module.exports.login = async (req, res, next) => {
     }
     const token = generateToken({ email });
     res.cookie('mestoToken', token, { maxAge: 3600000000, httpOnly: true, sameSite: true });
-    return res.status(200).send({ token });
+    return res.status(200).send({
+      name: userLogined.name,
+      about: userLogined.about,
+      avatar: userLogined.avatar,
+      email: userLogined.email,
+    });
   } catch (err) {
     if (err.name === 'ValidationError') {
       return next(new BadRequestError('Email и пароль обязательны'));
