@@ -101,8 +101,9 @@ module.exports.login = async (req, res, next) => {
   }
 };
 
-module.exports.updateProfile = async (req, res) => {
-  const userId = req.user._id;
+module.exports.updateProfile = async (req, res, next) => {
+  const userId = req.user.id;
+  console.log(userId);
   const { name, about } = req.body;
 
   try {
@@ -121,17 +122,16 @@ module.exports.updateProfile = async (req, res) => {
     }
 
     return res.status(200).send({ data: user });
-  } catch (error) {
-    if (error.name === 'ValidationError') {
-      return res.status(400).send({ error: 'Name and About fields are required' });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      return next(new BadRequestError('Name and About fields are required'));
     }
-
-    return res.status(500).send({ error: 'Server error' });
+    return next(new InternalServerError('Internal server error'));
   }
 };
 
-module.exports.updateAvatar = async (req, res) => {
-  const userId = req.user._id;
+module.exports.updateAvatar = async (req, res, next) => {
+  const userId = req.user.id;
   const { avatar } = req.body;
 
   try {
@@ -150,11 +150,10 @@ module.exports.updateAvatar = async (req, res) => {
     }
 
     return res.status(200).send({ data: user });
-  } catch (error) {
-    if (error.name === 'ValidationError') {
-      return res.status(400).send({ error: 'Avatar is required' });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      return next(new BadRequestError('Avatar is required'));
     }
-
-    return res.status(500).send({ error: 'Server error' });
+    return next(new InternalServerError('Internal server error'));
   }
 };
