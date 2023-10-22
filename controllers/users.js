@@ -12,6 +12,7 @@ const SALT_ROUNDS = 10;
 
 module.exports.getUsers = async (req, res, next) => {
   try {
+    console.log(req.user);
     // Проверяем, авторизован ли пользователь
     if (!req.user) {
       throw new UnauthorizedError('Unauthorized');
@@ -100,8 +101,7 @@ module.exports.login = async (req, res, next) => {
   }
 };
 
-// Обновить профиль
-module.exports.updateProfile = async (req, res, next) => {
+module.exports.updateProfile = async (req, res) => {
   const userId = req.user._id;
   const { name, about } = req.body;
 
@@ -120,17 +120,17 @@ module.exports.updateProfile = async (req, res, next) => {
       throw new NotFoundError('User not found');
     }
 
-    res.status(200).send({ data: user });
+    return res.status(200).send({ data: user });
   } catch (error) {
     if (error.name === 'ValidationError') {
-      next(new BadRequestError('Name and About fields are required'));
-    } else {
-      next(new InternalServerError('Server error'));
+      return res.status(400).send({ error: 'Name and About fields are required' });
     }
+
+    return res.status(500).send({ error: 'Server error' });
   }
 };
 
-module.exports.updateAvatar = async (req, res, next) => {
+module.exports.updateAvatar = async (req, res) => {
   const userId = req.user._id;
   const { avatar } = req.body;
 
@@ -152,9 +152,9 @@ module.exports.updateAvatar = async (req, res, next) => {
     return res.status(200).send({ data: user });
   } catch (error) {
     if (error.name === 'ValidationError') {
-      return next(new BadRequestError('Avatar is required'));
+      return res.status(400).send({ error: 'Avatar is required' });
     }
 
-    return next(new InternalServerError('Server error'));
+    return res.status(500).send({ error: 'Server error' });
   }
 };

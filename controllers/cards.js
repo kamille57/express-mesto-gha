@@ -22,20 +22,20 @@ module.exports.getCards = async (req, res, next) => {
 
 module.exports.createCard = async (req, res, next) => {
   try {
-    console.log(req.user._id);
+    console.log(req.user._id); // _id будет доступен
     const { name, link } = req.body;
 
     if (!name || !link) {
-      return res.status(400).send({ message: 'Необходимо указать название и ссылку' });
+      throw new BadRequestError('Имя и ссылка - необходимые поля');
     }
 
     const card = await Card.create({ name, link, owner: req.user._id });
-    res.status(201).send({ data: card._id });
+    res.status(201).send({ data: card });
   } catch (error) {
     if (error.name === 'ValidationError') {
       next(new BadRequestError('Неверный ID карточки'));
     } else {
-      next(new InternalServerError('Произошла ошибка на сервере'));
+      next(new InternalServerError());
     }
   }
 };
