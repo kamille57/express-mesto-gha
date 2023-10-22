@@ -38,9 +38,12 @@ module.exports.getUser = async (req, res, next) => {
       throw new NotFoundError('Пользователь не найден');
     }
 
-    res.status(200).send({ data: user });
+    return res.status(200).send({ data: user });
   } catch (error) {
-    next(error);
+    if (error.name === 'CastError') {
+      return next(new BadRequestError('Некорректный Id пользователя'));
+    }
+    return next(new InternalServerError('Internal server error'));
   }
 };
 
@@ -97,7 +100,7 @@ module.exports.login = async (req, res, next) => {
 
     const token = generateToken({ id: user._id });
     res.cookie('mestoToken', token, { maxAge: 3600000000, httpOnly: true, sameSite: true });
-    return res.status(201).send({ email, id: user._id });
+    return res.status(200).send({ email, id: user._id });
   } catch (error) {
     return next(error);
   }
