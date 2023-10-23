@@ -1,9 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable consistent-return */
-const mongoose = require('mongoose');
 const Card = require('../models/card');
 const { BadRequestError } = require('../errors/BadRequestError');
-const { InternalServerError } = require('../errors/InternalServerError');
 const { NotFoundError } = require('../errors/NotFoundError');
 const { ForbiddenError } = require('../errors/Forbidden');
 
@@ -22,21 +20,19 @@ module.exports.getCards = async (req, res, next) => {
 
 module.exports.createCard = async (req, res, next) => {
   const { name, link } = req.body;
-  console.log(req.body);
-  if (!name || !link) {
-    throw new BadRequestError('Имя и ссылка - необходимые поля');
-  }
-  try {
-    console.log(req.user.id); // _id будет доступен
 
+  if (!name || !link) {
+    throw next(new BadRequestError('Имя и ссылка - необходимые поля'));
+  }
+
+  try {
     const card = await Card.create({ name, link, owner: req.user.id });
-    res.status(201).send({ data: card });
-  } catch (error) {
-    if (error.name === 'ValidationError') {
-      next(new BadRequestError('Неверный ID карточки'));
-    } else {
-      next(new InternalServerError());
+    return res.status(201).send({ data: card });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      throw next(new BadRequestError('Неверный ID карточки'));
     }
+    throw next(err);
   }
 };
 
@@ -60,14 +56,9 @@ module.exports.deleteCard = async (req, res, next) => {
   }
 };
 
-// Добавить лайк
 module.exports.likeCard = async (req, res, next) => {
   try {
     const { cardId } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(cardId)) {
-      throw new BadRequestError('Неверный ID карточки');
-    }
 
     const card = await Card.findByIdAndUpdate(
       cardId,
@@ -90,10 +81,6 @@ module.exports.deleteLike = async (req, res, next) => {
   try {
     const { cardId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(cardId)) {
-      throw new BadRequestError('Неверный ID карточки');
-    }
-
     const card = await Card.findByIdAndUpdate(
       cardId,
       { $pull: { likes: req.user._id } },
@@ -104,7 +91,7 @@ module.exports.deleteLike = async (req, res, next) => {
       throw new NotFoundError('Карточка не найдена');
     }
 
-    res.status(200).send({ data: card.likes }); // исправление: возвращаем только список лайков
+    res.status(200).send({ data: card.likes });
   } catch (error) {
     next(error);
   }

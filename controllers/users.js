@@ -1,36 +1,16 @@
-const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const generateToken = require('../utils/jwt');
 const User = require('../models/user');
 const { BadRequestError } = require('../errors/BadRequestError');
 const { ConflictError } = require('../errors/ConflictError');
-const { InternalServerError } = require('../errors/InternalServerError');
 const { NotFoundError } = require('../errors/NotFoundError');
 const { UnauthorizedError } = require('../errors/UnauthorizedError');
 
 const SALT_ROUNDS = 10;
 
-module.exports.getUsers = async (req, res, next) => {
-  try {
-    // Проверяем, авторизован ли пользователь
-    if (!req.user) {
-      throw new UnauthorizedError('Unauthorized');
-    }
-
-    const users = await User.find();
-    res.status(200).send({ data: users });
-  } catch (error) {
-    next(error);
-  }
-};
-
 module.exports.getUser = async (req, res, next) => {
   const { userId } = req.params;
   try {
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      throw new BadRequestError('Некорректный Id пользователя');
-    }
-
     const user = await User.findById(userId);
 
     if (!user) {
@@ -52,7 +32,6 @@ module.exports.getUserInfo = async (req, res, next) => {
     }
 
     const userData = user.toObject();
-    delete userData.password;
 
     return res.status(200).json(userData);
   } catch (error) {
@@ -70,7 +49,7 @@ module.exports.createUser = async (req, res, next) => {
   }
 
   try {
-    const hash = await bcrypt.hash(String(password), SALT_ROUNDS);
+    const hash = await bcrypt.hash(password, SALT_ROUNDS);
 
     const user = await User.create({
       name,
@@ -92,7 +71,7 @@ module.exports.createUser = async (req, res, next) => {
     } if (err.code === 11000) {
       return next(new ConflictError('Пользователь с таким email уже существует'));
     }
-    return next(new InternalServerError('Ошибка сервера'));
+    throw next(err);
   }
 };
 
@@ -105,7 +84,7 @@ module.exports.login = async (req, res, next) => {
       throw new UnauthorizedError('Неправильная почта или пароль');
     }
 
-    const isValidPassword = await bcrypt.compare(String(password), user.password);
+    const isValidPassword = await bcrypt.compare(password, user.password);
 
     if (!isValidPassword) {
       throw new UnauthorizedError('Неправильная почта или пароль');
@@ -115,13 +94,12 @@ module.exports.login = async (req, res, next) => {
     res.cookie('mestoToken', token, { maxAge: 3600000000, httpOnly: true, sameSite: true });
     return res.status(200).send({ email, id: user._id });
   } catch (error) {
-    return next(error);
+    throw next(error);
   }
 };
 
 module.exports.updateProfile = async (req, res, next) => {
-  const userId = req.user.id; // Change req.user.id to req.user._id
-  console.log(userId);
+  const userId = req.user.id;
   const { name, about } = req.body;
   try {
     if (!name || !about) {
@@ -142,7 +120,7 @@ module.exports.updateProfile = async (req, res, next) => {
     if (err.name === 'ValidationError') {
       return next(new BadRequestError('Name and About fields are required'));
     }
-    return next(new InternalServerError('Internal server error'));
+    throw next(err);
   }
 };
 
@@ -170,6 +148,6 @@ module.exports.updateAvatar = async (req, res, next) => {
     if (err.name === 'ValidationError') {
       return next(new BadRequestError('Avatar is required'));
     }
-    return next(new InternalServerError('Internal server error'));
+    throw next(err);
   }
 };

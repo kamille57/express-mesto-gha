@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { UnauthorizedError } = require('../errors/UnauthorizedError');
 
 const authMiddleware = async (req, res, next) => {
   let payload;
@@ -6,19 +7,17 @@ const authMiddleware = async (req, res, next) => {
     const token = req.cookies.mestoToken;
 
     if (!token) {
-      return res.status(401).send({ message: 'Токен не получен' });
+      throw new UnauthorizedError('Токен не получен');
     }
 
     const validToken = token.replace('Bearer ', '');
     payload = jwt.verify(validToken, 'secret_code');
   } catch (error) {
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).send({ message: 'Проблема с токеном' });
+    let errorMessage = 'Ошибка авторизации';
+    if (error.name === 'JsonWebTokenError' || error.message === 'Email and password are required') {
+      errorMessage = 'Проблема с токеном или требуется авторизация';
     }
-    if (error.message === 'Email and password are required') {
-      return res.status(401).send({ message: 'Необходима авторизация' });
-    }
-    return res.status(500).send({ message: error.message });
+    return next(new UnauthorizedError(errorMessage));
   }
   req.user = payload;
   return next();
