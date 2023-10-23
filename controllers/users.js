@@ -58,13 +58,16 @@ module.exports.getUserInfo = async (req, res, next) => {
 // создание пользователя
 module.exports.createUser = async (req, res, next) => {
   const {
-    name, about, avatar, email, password,
+    name, about, avatar, email, password
   } = req.body;
+
   if (!email || !password) {
-    throw next(new BadRequestError('Email и пароль обязательны'));
+    throw new BadRequestError('Email и пароль обязательны');
   }
+
   try {
     const hash = await bcrypt.hash(String(password), SALT_ROUNDS);
+
     const user = await User.create({
       name,
       about,
@@ -72,6 +75,7 @@ module.exports.createUser = async (req, res, next) => {
       email,
       password: hash,
     });
+
     return res.status(201).send({
       name: user.name,
       about: user.about,
@@ -81,7 +85,9 @@ module.exports.createUser = async (req, res, next) => {
   } catch (error) {
     if (error instanceof ValidationError) {
       return next(new BadRequestError('Email и пароль обязательны'));
-    } if (error instanceof MongoError && error.code === 11000) {
+    }
+
+    if (error.code === 11000) {
       return next(new ConflictError('Пользователь с таким email уже существует'));
     }
 
