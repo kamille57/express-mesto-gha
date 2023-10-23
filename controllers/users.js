@@ -8,6 +8,15 @@ const { UnauthorizedError } = require('../errors/UnauthorizedError');
 
 const SALT_ROUNDS = 10;
 
+module.exports.getUsers = async (req, res, next) => {
+  try {
+    const users = await User.find();
+    res.status(200).send({ data: users });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports.getUser = async (req, res, next) => {
   const { userId } = req.params;
   try {
