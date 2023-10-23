@@ -22,7 +22,6 @@ app.use(errors());
 app.use(errorsHandler);
 
 // Обработчик для несуществующих маршрутов
-
 app.use((req, res) => {
   res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
 });

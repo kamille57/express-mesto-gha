@@ -1,3 +1,5 @@
+const { ValidationError } = require('mongoose');
+const { MongoError } = require('mongodb');
 const bcrypt = require('bcrypt');
 const generateToken = require('../utils/jwt');
 const User = require('../models/user');
@@ -17,13 +19,27 @@ module.exports.getUsers = async (req, res, next) => {
   }
 };
 
+const getUserById = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new NotFoundError('Пользователь не найден');
+  }
+  return user;
+};
+
+const getCurrentUser = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new NotFoundError('Пользователь не найден');
+  }
+  return user.toObject();
+};
+
 module.exports.getUser = async (req, res, next) => {
   const { userId } = req.params;
+
   try {
-    const user = await User.findById(userId);
-    if (!user) {
-      throw new NotFoundError('Пользователь не найден');
-    }
+    const user = await getUserById(userId);
     return res.status(200).send({ data: user });
   } catch (error) {
     return next(error);
@@ -32,13 +48,8 @@ module.exports.getUser = async (req, res, next) => {
 
 module.exports.getUserInfo = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      const notFoundError = new NotFoundError('Пользователь не найден');
-      return next(notFoundError);
-    }
-    const userData = user.toObject();
-    return res.status(200).json(userData);
+    const user = await getCurrentUser(req.user.id);
+    return res.status(200).json(user);
   } catch (error) {
     return next(error);
   }
@@ -67,9 +78,9 @@ module.exports.createUser = async (req, res, next) => {
       email: user.email,
     });
   } catch (error) {
-    if (error.name === 'ValidationError') {
+    if (error instanceof ValidationError) {
       return next(new BadRequestError('Email и пароль обязательны'));
-    } if (error.code === 11000) {
+    } if (error instanceof MongoError && error.code === 11000) {
       return next(new ConflictError('Пользователь с таким email уже существует'));
     }
 
@@ -96,50 +107,41 @@ module.exports.login = async (req, res, next) => {
   }
 };
 
-module.exports.updateProfile = async (req, res, next) => {
-  const userId = req.user.id;
-  const { name, about } = req.body;
+const updateUserData = async (userId, data, res, next) => {
   try {
-    if (!name || !about) {
-      throw new BadRequestError('Name and About fields are required');
-    }
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { name, about },
-      { new: true, runValidators: true },
-    );
+    const user = await User.findByIdAndUpdate(userId, data, { new: true, runValidators: true });
     if (!user) {
       throw new NotFoundError('User not found');
     }
-    return res.status(200).send({ name, about });
+    return user;
   } catch (err) {
     if (err.name === 'ValidationError') {
-      return next(new BadRequestError('Avatar is required'));
+      return next(new BadRequestError('Invalid data'));
     }
     return next(err);
   }
 };
 
+module.exports.updateProfile = async (req, res, next) => {
+  const userId = req.user.id;
+  const { name, about } = req.body;
+  if (!name || !about) {
+    throw new BadRequestError('Name and About fields are required');
+  }
+
+  const user = await updateUserData(userId, { name, about }, res, next);
+
+  return res.status(200).json({ name: user.name, about: user.about });
+};
+
 module.exports.updateAvatar = async (req, res, next) => {
   const userId = req.user.id;
   const { avatar } = req.body;
-  try {
-    if (!avatar) {
-      throw new BadRequestError('Avatar is required');
-    }
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { avatar },
-      { new: true, runValidators: true },
-    );
-    if (!user) {
-      throw new NotFoundError('User not found');
-    }
-    return res.status(200).send({ user });
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      return next(new BadRequestError('Avatar is required'));
-    }
-    return next(err);
+  if (!avatar) {
+    throw new BadRequestError('Avatar is required');
   }
+
+  const user = await updateUserData(userId, { avatar }, res, next);
+
+  return res.status(200).json({ user });
 };
