@@ -22,7 +22,7 @@ module.exports.createCard = async (req, res, next) => {
   const { name, link } = req.body;
 
   if (!name || !link) {
-    throw next(new BadRequestError('Имя и ссылка - необходимые поля'));
+    return next(new BadRequestError('Имя и ссылка - необходимые поля'));
   }
 
   try {
@@ -30,9 +30,9 @@ module.exports.createCard = async (req, res, next) => {
     return res.status(201).send({ data: card });
   } catch (err) {
     if (err.name === 'ValidationError') {
-      throw next(new BadRequestError('Неверный ID карточки'));
+      return next(new BadRequestError('Неверный ID карточки'));
     }
-    throw next(err);
+    return next(err);
   }
 };
 
@@ -67,7 +67,7 @@ module.exports.likeCard = async (req, res, next) => {
     );
 
     if (!card) {
-      throw new NotFoundError('Карточка не найдена');
+      return next(new NotFoundError('Карточка не найдена'));
     }
 
     res.status(200).send({ data: card.likes });
@@ -88,7 +88,7 @@ module.exports.deleteLike = async (req, res, next) => {
     );
 
     if (!card) {
-      throw new NotFoundError('Карточка не найдена');
+      return next(new NotFoundError('Карточка не найдена'));
     }
 
     res.status(200).send({ data: card.likes });

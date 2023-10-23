@@ -2,7 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
 const { errors } = require('celebrate');
-const { NotFoundError } = require('./errors/NotFoundError');
 
 const router = require('./routes/routers');
 const {
@@ -22,9 +21,10 @@ app.use(router);
 app.use(errors());
 app.use(errorsHandler);
 
-// Middleware для обработки несуществующих маршрутов
-app.use((req, res, next) => {
-  next(new NotFoundError('Запрашиваемый ресурс не найден'));
+// Обработчик для несуществующих маршрутов
+
+app.use((req, res) => {
+  res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
 });
 
 app.listen(PORT, () => {
