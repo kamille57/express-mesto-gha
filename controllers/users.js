@@ -1,4 +1,3 @@
-const { ValidationError } = require('mongoose');
 const bcrypt = require('bcrypt');
 const generateToken = require('../utils/jwt');
 const User = require('../models/user');
@@ -81,16 +80,14 @@ module.exports.createUser = async (req, res, next) => {
       avatar: user.avatar,
       email: user.email,
     });
-  } catch (error) {
-    if (error instanceof ValidationError) {
+  } catch (err) {
+    if (err.name === 'ValidationError') {
       return next(new BadRequestError('Email и пароль обязательны'));
-    }
-
-    if (error.code === 11000) {
+    } if (err.code === 11000) {
       return next(new ConflictError('Пользователь с таким email уже существует'));
     }
 
-    return next(error);
+    return next(err);
   }
 };
 
