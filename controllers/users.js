@@ -97,7 +97,7 @@ module.exports.login = async (req, res, next) => {
 };
 
 module.exports.updateProfile = async (req, res, next) => {
-  const userId = req.user._id;
+  const userId = req.user.id;
   const { name, about } = req.body;
   try {
     if (!name || !about) {
@@ -121,7 +121,7 @@ module.exports.updateProfile = async (req, res, next) => {
 };
 
 module.exports.updateAvatar = async (req, res, next) => {
-  const userId = req.user._id;
+  const userId = req.user.id;
   const { avatar } = req.body;
   try {
     if (!avatar) {
