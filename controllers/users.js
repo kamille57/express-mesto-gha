@@ -1,5 +1,4 @@
 const { ValidationError } = require('mongoose');
-const { MongoError } = require('mongodb');
 const bcrypt = require('bcrypt');
 const generateToken = require('../utils/jwt');
 const User = require('../models/user');
@@ -58,7 +57,7 @@ module.exports.getUserInfo = async (req, res, next) => {
 // создание пользователя
 module.exports.createUser = async (req, res, next) => {
   const {
-    name, about, avatar, email, password
+    name, about, avatar, email, password,
   } = req.body;
 
   if (!email || !password) {
