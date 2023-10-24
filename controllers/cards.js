@@ -70,7 +70,7 @@ module.exports.likeCard = async (req, res, next) => {
   try {
     const { cardId } = req.params;
 
-    const card = await updateCardLikes(cardId, { $addToSet: { likes: req.user._id } });
+    const card = await updateCardLikes(cardId, { $addToSet: { likes: req.user.id } });
 
     res.status(200).send({ data: card.likes });
   } catch (error) {
@@ -82,7 +82,7 @@ module.exports.deleteLike = async (req, res, next) => {
   try {
     const { cardId } = req.params;
 
-    const card = await updateCardLikes(cardId, { $pull: { likes: req.user._id } });
+    const card = await updateCardLikes(cardId, { $pull: { likes: req.user.id } });
 
     res.status(200).send({ data: card.likes });
   } catch (error) {
