@@ -14,7 +14,7 @@ const authMiddleware = async (req, res, next) => {
     payload = jwt.verify(validToken, 'secret_code');
   } catch (error) {
     let errorMessage = 'Ошибка авторизации';
-    if (error.name === 'JsonWebTokenError' || error.message === 'Email and password are required') {
+    if (error.name === 'JsonWebTokenError') {
       errorMessage = 'Проблема с токеном или требуется авторизация';
     }
     return next(new UnauthorizedError(errorMessage));

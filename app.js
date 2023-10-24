@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
 const { errors } = require('celebrate');
+const { NotFoundError } = require('./errors/NotFoundError');
 
 const router = require('./routes/routers');
 const {
@@ -19,12 +20,12 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
 
 app.use(router);
 app.use(errors());
-app.use(errorsHandler);
 
-// Обработчик для несуществующих маршрутов
-app.use((req, res) => {
-  res.status(404).send({ message: 'Запрашиваемый ресурс не найден' });
+app.use((req, res, next) => {
+  next(new NotFoundError('Запрашиваемый ресурс не найден'));
 });
+
+app.use(errorsHandler);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

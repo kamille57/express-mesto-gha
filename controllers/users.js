@@ -33,6 +33,12 @@ const getCurrentUser = async (userId) => {
   return user.toObject();
 };
 
+const handleError = (error, res, next) => {
+  if (error instanceof NotFoundError) {
+    return res.status(error.statusCode).json({ message: error.message });
+  } return next(error);
+};
+
 module.exports.getUser = async (req, res, next) => {
   const { userId } = req.params;
 
@@ -40,7 +46,7 @@ module.exports.getUser = async (req, res, next) => {
     const user = await getUserById(userId);
     return res.status(200).send({ data: user });
   } catch (error) {
-    return next(error);
+    return handleError(error, res, next);
   }
 };
 
@@ -49,7 +55,7 @@ module.exports.getUserInfo = async (req, res, next) => {
     const user = await getCurrentUser(req.user.id);
     return res.status(200).json(user);
   } catch (error) {
-    return next(error);
+    return handleError(error, res, next);
   }
 };
 
@@ -58,10 +64,6 @@ module.exports.createUser = async (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
-
-  if (!email || !password) {
-    throw new BadRequestError('Email и пароль обязательны');
-  }
 
   try {
     const hash = await bcrypt.hash(String(password), SALT_ROUNDS);
@@ -126,25 +128,27 @@ const updateUserData = async (userId, data, res, next) => {
 };
 
 module.exports.updateProfile = async (req, res, next) => {
-  const userId = req.user.id;
-  const { name, about } = req.body;
-  if (!name || !about) {
-    throw new BadRequestError('Name and About fields are required');
+  try {
+    const userId = req.user.id;
+    const { name, about } = req.body;
+
+    const user = await updateUserData(userId, { name, about });
+
+    return res.status(200).json({ name: user.name, about: user.about });
+  } catch (err) {
+    return next(err);
   }
-
-  const user = await updateUserData(userId, { name, about }, res, next);
-
-  return res.status(200).json({ name: user.name, about: user.about });
 };
 
 module.exports.updateAvatar = async (req, res, next) => {
-  const userId = req.user.id;
-  const { avatar } = req.body;
-  if (!avatar) {
-    throw new BadRequestError('Avatar is required');
+  try {
+    const userId = req.user.id;
+    const { avatar } = req.body;
+
+    const user = await updateUserData(userId, { avatar });
+
+    return res.status(200).json({ user });
+  } catch (err) {
+    return next(err);
   }
-
-  const user = await updateUserData(userId, { avatar }, res, next);
-
-  return res.status(200).json({ user });
 };
