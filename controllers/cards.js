@@ -52,10 +52,10 @@ module.exports.deleteCard = async (req, res, next) => {
   }
 };
 
-const updateCardLikes = async (cardId, likes) => {
+const updateCard = async (cardId, update) => {
   const card = await Card.findByIdAndUpdate(
     cardId,
-    { likes },
+    update,
     { new: true },
   );
 
@@ -63,14 +63,14 @@ const updateCardLikes = async (cardId, likes) => {
     throw new NotFoundError('Карточка не найдена');
   }
 
-  return card.likes;
+  return card;
 };
 
 module.exports.likeCard = async (req, res, next) => {
   try {
     const { cardId } = req.params;
 
-    const card = await updateCardLikes(cardId, { $addToSet: { likes: req.user.id } });
+    const card = await updateCard(cardId, { $addToSet: { likes: req.user._id } });
 
     res.status(200).send({ data: card.likes });
   } catch (error) {
@@ -82,7 +82,7 @@ module.exports.deleteLike = async (req, res, next) => {
   try {
     const { cardId } = req.params;
 
-    const card = await updateCardLikes(cardId, { $pull: { likes: req.user.id } });
+    const card = await updateCard(cardId, { $pull: { likes: req.user._id } });
 
     res.status(200).send({ data: card.likes });
   } catch (error) {
