@@ -52,40 +52,38 @@ module.exports.deleteCard = async (req, res, next) => {
   }
 };
 
-const updateCard = async (cardId, update) => {
-  const card = await Card.findByIdAndUpdate(
-    cardId,
-    update,
-    { new: true },
-  );
+const updateUserCard = async (req, res, next, updateCard) => {
+  try {
+    const updatedCard = await Card.findByIdAndUpdate(
+      req.user.id,
+      updateCard,
+      { new: true },
+    );
 
-  if (!card) {
-    throw new NotFoundError('Карточка не найдена');
+    if (!updatedCard) {
+      throw new NotFoundError('Карточка не найдена');
+    }
+
+    return res.status(200).json(updatedCard);
+  } catch (error) {
+    return next(error);
   }
-
-  return card;
 };
 
 module.exports.likeCard = async (req, res, next) => {
-  try {
-    const { cardId } = req.params;
-
-    const card = await updateCard(cardId, { $addToSet: { likes: req.user._id } });
-
-    res.status(200).send({ data: card.likes });
-  } catch (error) {
-    next(error);
-  }
+  const { cardId } = req.params;
+  const card = await Card.findByIdAndUpdate(
+    cardId,
+    { $addToSet: { likes: req.user._id } },
+  );
+  await updateUserCard(req, res, next, card);
 };
 
 module.exports.deleteLike = async (req, res, next) => {
-  try {
-    const { cardId } = req.params;
-
-    const card = await updateCard(cardId, { $pull: { likes: req.user._id } });
-
-    res.status(200).send({ data: card.likes });
-  } catch (error) {
-    next(error);
-  }
+  const { cardId } = req.params;
+  const card = await Card.findByIdAndUpdate(
+    cardId,
+    { $pull: { likes: req.user._id } },
+  );
+  await updateUserCard(req, res, next, card);
 };

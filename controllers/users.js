@@ -112,43 +112,29 @@ module.exports.login = async (req, res, next) => {
   }
 };
 
-const updateUserData = async (userId, data, res, next) => {
+const updateUserData = async (req, res, next, updateData) => {
   try {
-    const user = await User.findByIdAndUpdate(userId, data, { new: true, runValidators: true });
-    if (!user) {
-      throw new NotFoundError('User not found');
+    const updatedUser = await User.findByIdAndUpdate(req.user.id, updateData, {
+      new: true,
+      runValidators: true,
+    });
+    if (!updatedUser) {
+      throw new NotFoundError('Пользователь с указанным _id не найден.');
     }
-    return user;
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      return next(new BadRequestError('Invalid data'));
-    }
-    return next(err);
+    return res.status(200).json(updatedUser);
+  } catch (error) {
+    return next(error);
   }
 };
 
 module.exports.updateProfile = async (req, res, next) => {
-  try {
-    const userId = req.user.id;
-    const { name, about } = req.body;
-
-    const user = await updateUserData(userId, { name, about });
-
-    return res.status(200).json({ name: user.name, about: user.about });
-  } catch (err) {
-    return next(err);
-  }
+  const { name, about } = req.body;
+  const updateData = { name, about };
+  await updateUserData(req, res, next, updateData);
 };
 
 module.exports.updateAvatar = async (req, res, next) => {
-  try {
-    const userId = req.user.id;
-    const { avatar } = req.body;
-
-    const user = await updateUserData(userId, { avatar });
-
-    return res.status(200).json({ user });
-  } catch (err) {
-    return next(err);
-  }
+  const { avatar } = req.body;
+  const updateData = { avatar };
+  await updateUserData(req, res, next, updateData);
 };
