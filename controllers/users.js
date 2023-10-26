@@ -17,13 +17,13 @@ module.exports.getUsers = async (req, res, next) => {
   }
 };
 
-const getUserInfo = async (req, res, next) => {
+const findByIdResponse = async (res, next, id) => {
   try {
-    const user = await User.findById(req.params.userId);
+    const user = await User.findById(id);
     if (!user) {
       throw new NotFoundError('Пользователь не найден');
     }
-    return res.status(200).json(user);
+    return res.status(200).send({ data: user });
   } catch (error) {
     if (error.name === 'ValidationError') {
       return next(new BadRequestError('Invalid data'));
@@ -33,11 +33,12 @@ const getUserInfo = async (req, res, next) => {
 };
 
 module.exports.getUser = async (req, res, next) => {
-  await getUserInfo(req, res, next);
+  const { userId } = req.params;
+  await findByIdResponse(res, next, userId);
 };
 
 module.exports.getUserInfo = async (req, res, next) => {
-  await getUserInfo(req, res, next);
+  await findByIdResponse(res, next, req.user.id);
 };
 
 // создание пользователя
