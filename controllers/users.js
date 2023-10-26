@@ -25,6 +25,9 @@ const getUserInfo = async (req, res, next) => {
     }
     return res.status(200).json(user);
   } catch (error) {
+    if (error.name === 'ValidationError') {
+      return next(new BadRequestError('Invalid data'));
+    }
     return next(error);
   }
 };
