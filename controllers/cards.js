@@ -65,6 +65,9 @@ const updateUserCard = async (req, res, next, updateCard) => {
 
     return res.status(200).json(updatedCard);
   } catch (error) {
+    if (error.name === 'ValidationError') {
+      return next(new BadRequestError('Invalid data'));
+    }
     return next(error);
   }
 };

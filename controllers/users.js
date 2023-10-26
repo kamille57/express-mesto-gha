@@ -123,6 +123,9 @@ const updateUserData = async (req, res, next, updateData) => {
     }
     return res.status(200).json(updatedUser);
   } catch (error) {
+    if (error.name === 'ValidationError') {
+      return next(new BadRequestError('Invalid data'));
+    }
     return next(error);
   }
 };
