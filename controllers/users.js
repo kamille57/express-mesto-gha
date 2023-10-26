@@ -17,46 +17,24 @@ module.exports.getUsers = async (req, res, next) => {
   }
 };
 
-const getUserById = async (userId) => {
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new NotFoundError('Пользователь не найден');
+const getUserInfo = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      throw new NotFoundError('Пользователь не найден');
+    }
+    return res.status(200).json(user);
+  } catch (error) {
+    return next(error);
   }
-  return user;
-};
-
-const getCurrentUser = async (userId) => {
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new NotFoundError('Пользователь не найден');
-  }
-  return user.toObject();
-};
-
-const handleError = (error, res, next) => {
-  if (error instanceof NotFoundError) {
-    return res.status(error.statusCode).json({ message: error.message });
-  } return next(error);
 };
 
 module.exports.getUser = async (req, res, next) => {
-  const { userId } = req.params;
-
-  try {
-    const user = await getUserById(userId);
-    return res.status(200).send({ data: user });
-  } catch (error) {
-    return handleError(error, res, next);
-  }
+  await getUserInfo(req, res, next);
 };
 
 module.exports.getUserInfo = async (req, res, next) => {
-  try {
-    const user = await getCurrentUser(req.user.id);
-    return res.status(200).json(user);
-  } catch (error) {
-    return handleError(error, res, next);
-  }
+  await getUserInfo(req, res, next);
 };
 
 // создание пользователя
