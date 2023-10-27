@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const helmet = require('helmet');
 const { errors } = require('celebrate');
 const { NotFoundError } = require('./errors/NotFoundError');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
 
 const router = require('./routes/routers');
 const {
@@ -18,7 +19,9 @@ mongoose.connect('mongodb://localhost:27017/mestodb', {
   useUnifiedTopology: true,
 });
 
+app.use(requestLogger);
 app.use(router);
+app.use(errorLogger);
 app.use(errors());
 
 app.use((req, res, next) => {
